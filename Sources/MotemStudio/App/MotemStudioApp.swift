@@ -7,12 +7,12 @@ struct MotemStudioApp: App {
     @StateObject private var godot = GodotPreviewController.shared
 
     init() {
-        // Pin cwd + memory files into a Motem-managed sandbox so each
-        // CLI starts from a known clean slate.
-        AgentSandbox.ensureLayout()
-        // Start the unix-socket MCP bridge as soon as the app process
-        // exists so any agent terminal spawned afterward can connect.
-        MCPBridgeServer.shared.start()
+        // Intentionally empty. Sandbox layout and the MCP bridge are
+        // both deferred to the first agent terminal session — see
+        // `AgentTerminalView.start()`. Doing them eagerly here triggers
+        // a wave of TCC prompts (firewall, Documents / Downloads /
+        // Music) on first launch before the user has a chance to opt
+        // into anything.
     }
 
     var body: some Scene {

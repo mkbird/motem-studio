@@ -28,6 +28,25 @@ struct GodotPreviewPane: View {
                 .allowsHitTesting(!showEngine)
         }
         .frame(minHeight: 240)
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { trackGeometry(proxy.frame(in: .global)) }
+                    .onChange(of: proxy.frame(in: .global)) { newFrame in
+                        trackGeometry(newFrame)
+                    }
+            }
+        )
+        .onAppear {
+            // The adapter installs global NSEvent monitors and a 30 Hz
+            // pump, so it should run for the whole app lifetime once
+            // the user has a preview pane on screen.
+            MacOSInputAdapter.shared.start()
+        }
+    }
+
+    private func trackGeometry(_ frame: CGRect) {
+        MacOSInputAdapter.shared.paneWindowFrame = frame
     }
 
     private var showEngine: Bool {
@@ -40,8 +59,17 @@ struct GodotPreviewPane: View {
     @ViewBuilder
     private var engineLayer: some View {
         #if canImport(SwiftGodotKit)
-        GodotAppView(source: controller.activeDirectoryPath)
-            .environment(\.godotApp, controller.godotApp)
+        if let godotApp = controller.godotApp {
+            // Once mounted, this view stays for the rest of the app's
+            // lifetime — re-mounting crashes the embedded display server.
+            GodotAppView(source: controller.activeDirectoryPath)
+                .environment(\.godotApp, godotApp)
+        } else {
+            // Engine not booted yet. The overlay layer renders the
+            // placeholder, so all we need here is a neutral background
+            // that won't trigger any permission-bearing initialisation.
+            Color.black.opacity(0.92)
+        }
         #else
         Color.black.opacity(0.92)
         #endif

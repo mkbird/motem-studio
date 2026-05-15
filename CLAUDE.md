@@ -126,6 +126,23 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 - [ ] Diff 查看器
 - [ ] 拖拽文件/截图到终端
 
+## V2 进度 — 跨平台 AI 游戏创作
+
+详细设计：`docs/cross-platform-creation.md`。目标：用户在 Motem Studio 终端里
+让 claude 写 Godot 4 游戏，macOS 上键鼠/触控板试玩，一键 Publish 到后端，
+iPhone（deskrobot-ios）上自动可玩 —— 复用后端已有的 `_template` + `CLAUDE.md`、
+`InputBridge` 跨平台契约和 `game_ready` 分发流水线。
+
+进度：
+
+- [ ] MacOSInputAdapter（键鼠/触控板 → `/root/InputBridge` 9 属性）
+- [ ] 后端 `GET /api/games/template-bundle` + `POST /api/games`
+- [ ] AuthManager + APIClient + LoginView
+- [ ] TemplateBundleSync（启动后从后端拉模板到 sandbox）
+- [ ] GameLibrarySidebar + GameLoader
+- [ ] PublishController + "Publish to iPhone" 按钮
+- [ ] 跨端联调（macOS → backend → iPhone 双向）
+
 ## 回复语言
 
 中文。

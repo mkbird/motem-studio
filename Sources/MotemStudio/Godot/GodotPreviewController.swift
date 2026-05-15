@@ -35,12 +35,15 @@ final class GodotPreviewController: ObservableObject {
     @Published private(set) var state: State = .idle
 
     #if canImport(SwiftGodotKit)
-    /// Created eagerly at app launch with a stub project pinned to
-    /// `_active`. The engine is a process-level singleton on macOS;
-    /// keeping the app instance stable from start to finish prevents
-    /// SwiftUI from re-mounting `NSGodotAppView` (which crashes the
-    /// embedded display server's cursor handling).
-    let godotApp: GodotApp
+    /// Booted lazily on the first `preview()` call. Initialising the
+    /// embedded Godot engine triggers CoreAudio / display / file walks
+    /// that fire a wave of TCC prompts (Documents / Downloads / Music /
+    /// firewall / etc.) — none of which a terminal-only user should ever
+    /// have to answer. We hold the engine in an Optional and the
+    /// `GodotPreviewPane` keeps its embedded view *unmounted* until this
+    /// is non-nil, then keeps it mounted for the rest of the app's
+    /// lifetime (re-mounting crashes macOS's embedded display server).
+    @Published private(set) var godotApp: GodotApp?
     #endif
 
     /// Absolute path most recently surfaced to the engine; nil until
@@ -48,17 +51,25 @@ final class GodotPreviewController: ObservableObject {
     @Published private(set) var currentProjectDir: URL?
 
     private init() {
+        // Intentionally empty. Everything below — stub project, engine
+        // creation — is deferred to `ensureEngineBooted()` so we do not
+        // pay the permission tax for users who never preview a game.
+    }
+
+    var activeDirectoryPath: String { ActiveDirectorySync.activeURL.path }
+
+    #if canImport(SwiftGodotKit)
+    /// Idempotent. First call creates `_active/` and boots Godot.
+    private func ensureEngineBooted() {
+        guard godotApp == nil else { return }
         ActiveDirectorySync.ensureStubProject()
-        #if canImport(SwiftGodotKit)
-        self.godotApp = GodotApp(
+        godotApp = GodotApp(
             packFile: "",
             godotPackPath: ActiveDirectorySync.activeURL.path,
             displayDriver: "embedded"
         )
-        #endif
     }
-
-    var activeDirectoryPath: String { ActiveDirectorySync.activeURL.path }
+    #endif
 
     // MARK: - Public ops
 
@@ -75,9 +86,9 @@ final class GodotPreviewController: ObservableObject {
         currentProjectDir = projectDir
 
         #if canImport(SwiftGodotKit)
-        // The engine was booted on app launch with the stub project.
-        // Switching to the new project is just a scene reload — same
-        // path the agent will call again for godot_reload.
+        // First preview triggers a one-time engine boot. Subsequent
+        // previews are scene reloads through the same engine instance.
+        ensureEngineBooted()
         return await reload(announcedProjectDir: projectDir)
         #else
         let message = "SwiftGodotKit not integrated"
@@ -111,6 +122,10 @@ final class GodotPreviewController: ObservableObject {
         // polling tick. Host stays as `current_scene` forever, so
         // `_flush_scene_change` is never triggered.
         ActiveDirectorySync.touchReloadToken()
+        // InputBridge node persists at `/root/InputBridge` (host
+        // autoload), but the cached weak reference belongs to the
+        // previous frame's lookup — force a re-resolve next pump tick.
+        MacOSInputAdapter.shared.invalidateBridgeCache()
         if let dir = announcedProjectDir { state = .running(projectDir: dir) }
         return .success(statusPayload())
     }
@@ -120,6 +135,11 @@ final class GodotPreviewController: ObservableObject {
     /// inside the same process.
     func stop() async -> BridgeResult {
         #if canImport(SwiftGodotKit)
+        // Nothing to stop if the engine was never booted.
+        guard godotApp != nil else {
+            state = .idle
+            return .success(statusPayload())
+        }
         if let sceneTree = Engine.getMainLoop() as? SceneTree {
             sceneTree.unloadCurrentScene()
         }
@@ -145,7 +165,7 @@ final class GodotPreviewController: ObservableObject {
             payload["error"] = reason
         }
         #if canImport(SwiftGodotKit)
-        payload["booted"] = (godotApp.instance != nil)
+        payload["booted"] = (godotApp?.instance != nil)
         #else
         payload["booted"] = false
         #endif

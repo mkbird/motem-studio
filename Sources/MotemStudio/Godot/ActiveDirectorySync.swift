@@ -160,6 +160,17 @@ enum ActiveDirectorySync {
         let hostDir = dir.appendingPathComponent("__motem_host__", isDirectory: true)
         try? FileManager.default.createDirectory(at: hostDir, withIntermediateDirectories: true)
 
+        // 1194×834 is the design resolution every AI-generated game
+        // is authored against (kept identical to iOS for cross-platform
+        // parity). `stretch_mode=canvas_items` + `aspect=keep` makes
+        // Godot scale + letterbox automatically so the same scene
+        // renders correctly inside any preview-pane size the user
+        // drags the splitter to on macOS.
+        //
+        // The `InputBridge` autoload makes `/root/InputBridge` always
+        // available so `MacOSInputAdapter` can pump the 9 properties
+        // straight into a stable node, regardless of which AI game is
+        // currently loaded under the host.
         let projectGodot = """
         config_version=5
 
@@ -167,6 +178,17 @@ enum ActiveDirectorySync {
         config/name=\"MotemStudioHost\"
         run/main_scene=\"res://__motem_host__/host.tscn\"
         config/features=PackedStringArray(\"4.4\")
+        boot_splash/show_image=false
+        boot_splash/bg_color=Color(0.05, 0.05, 0.08, 1)
+
+        [autoload]
+        InputBridge=\"*res://__motem_host__/input_bridge.gd\"
+
+        [display]
+        window/size/viewport_width=1194
+        window/size/viewport_height=834
+        window/stretch/mode=\"canvas_items\"
+        window/stretch/aspect=\"keep\"
 
         [rendering]
         renderer/rendering_method.mobile=\"mobile\"
@@ -271,9 +293,32 @@ enum ActiveDirectorySync {
         			return c
         	return ""
         """#
+        // Minimal `InputBridge` mirroring the iOS template contract.
+        // Hosts (iOS FaceDetector pump, macOS MacOSInputAdapter pump,
+        // future controller bridges) write the 9 properties directly via
+        // `Node.set(property:value:)`; the game scripts read them in
+        // `_process()` / `_input()`. No signals are emitted — the contract
+        // is property-polling for parity with the iOS implementation.
+        let inputBridgeGd = """
+        extends Node
+
+        # 9 properties — cross-platform InputBridge contract. Hosts write
+        # these every frame; game scripts poll them.
+        var body_lean_x: float = 0.0
+        var body_lean_y: float = 0.0
+        var is_reaching_out: bool = false
+        var is_ducking: bool = false
+        var is_hands_up: bool = false
+        var body_detected: bool = false
+        var face_position: Vector2 = Vector2(0.5, 0.5)
+        var face_detected: bool = false
+        var hand_gesture: String = "none"
+        var hand_position: Vector2 = Vector2(0.5, 0.5)
+        """
         try? projectGodot.write(to: dir.appendingPathComponent("project.godot"), atomically: true, encoding: .utf8)
         try? hostTscn.write(to: hostDir.appendingPathComponent("host.tscn"), atomically: true, encoding: .utf8)
         try? hostGd.write(to: hostDir.appendingPathComponent("host.gd"), atomically: true, encoding: .utf8)
+        try? inputBridgeGd.write(to: hostDir.appendingPathComponent("input_bridge.gd"), atomically: true, encoding: .utf8)
 
         // Initial token file (empty = nothing loaded yet)
         let tokenPath = hostDir.appendingPathComponent("reload_token.txt")

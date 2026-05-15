@@ -30,6 +30,13 @@ final class AgentTerminalView: LocalProcessTerminalView {
             return
         }
 
+        // Lay down the sandbox skeleton and start the MCP bridge on the
+        // first session. Both are idempotent and main-actor safe. We do
+        // them here rather than at app launch so a user who never opens
+        // a terminal never pays the permission tax.
+        AgentSandbox.ensureLayout()
+        MCPBridgeServer.shared.start()
+
         // Make the Godot preview MCP server visible to the agent before
         // it boots. Failures here are non-fatal: the terminal still
         // works, only the auto-preview feature is unavailable.

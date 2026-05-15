@@ -200,6 +200,50 @@
         }
       }
     },
+    "terminal.new.tooltip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "New terminal" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "新建终端" }
+        }
+      }
+    },
+    "terminal.close.tooltip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Close terminal" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "关闭终端" }
+        }
+      }
+    },
+    "terminal.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "No terminal yet" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "暂无终端" }
+        }
+      }
+    },
+    "terminal.empty.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Click + above to start one." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "点击右上 + 新建一个。" }
+        }
+      }
+    },
     "project.open" : {
       "extractionState" : "manual",
       "localizations" : {

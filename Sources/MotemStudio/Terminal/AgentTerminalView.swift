@@ -19,6 +19,13 @@ final class AgentTerminalView: LocalProcessTerminalView {
         super.init(frame: frame)
         coordinator.owner = self
         self.processDelegate = coordinator
+        // Default SwiftTerm font is Menlo at NSFont.systemFontSize (13pt),
+        // which crowds the lower pane on a 1440-wide window. 11pt fits
+        // the V1 layout and matches Terminal.app's "small" preset.
+        if let font = NSFont(name: "Menlo", size: 11)
+            ?? NSFont(name: "SF Mono", size: 11) {
+            self.font = font
+        }
         // Accept dragged files (any kind — image, code, config) and
         // raw images from apps that don't expose a backing file URL
         // (Preview, Photoshop selections, Cmd-Shift-Ctrl-4 captures).

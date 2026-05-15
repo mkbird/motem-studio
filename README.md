@@ -93,3 +93,35 @@ Next (see `plan.md`):
 - [ ] Multi-tab sessions (#5)
 - [ ] Diff viewer (#7)
 - [ ] Drag-and-drop into terminal (#8)
+
+## V2 status — cross-platform AI game creation
+
+End-to-end flow: log in → write a Godot 4 game in the terminal → play
+it inside Motem Studio with keyboard / mouse / trackpad → click
+"Publish to iPhone" → the same account's iPhone (`deskrobot-ios`)
+receives the game through the existing `game_ready` push pipeline.
+
+Design doc: `docs/cross-platform-creation.md`. Shipped components:
+
+- [x] Embedded Godot 4 engine via SwiftGodotKit, host scene + token-
+      driven child swap, design resolution pinned to 1194×834
+- [x] In-process MCP server (`godot_preview` / `godot_reload` /
+      `godot_stop` / `godot_status`) consumed by claude / codex /
+      gemini through the sandbox's `.mcp.json`
+- [x] `MacOSInputAdapter` pumps keyboard / mouse / trackpad into the
+      cross-platform `/root/InputBridge` autoload
+- [x] Login panel reusing the deskrobot account system; per-user
+      `Library` sidebar pulled from `/api/games/mine`
+- [x] `TemplateBundleSync` mirrors `_template/` + slow-path CLAUDE.md
+      from the backend so the terminal agents see the same scaffold
+      iOS games are generated against
+- [x] `Publish to iPhone` button zips the current preview, POSTs it to
+      `/api/games`, and triggers backend's existing `game_ready`
+      broadcast — the iPhone download path is unchanged
+
+Backend changes that pair with this milestone:
+
+- `GET /api/games/template-bundle` — tar.gz of `_template/` +
+  `_template_slowpath/CLAUDE.md`, ETag-cached.
+- `POST /api/games` — auth-required upload of a Godot zip + meta,
+  generates `mac_<unix>_<md5>` ids, persists, broadcasts `game_ready`.

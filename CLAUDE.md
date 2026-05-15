@@ -138,13 +138,26 @@ iPhone（deskrobot-ios）上自动可玩 —— 复用后端已有的 `_template
 
 进度：
 
-- [ ] MacOSInputAdapter（键鼠/触控板 → `/root/InputBridge` 9 属性）
-- [ ] 后端 `GET /api/games/template-bundle` + `POST /api/games`
-- [ ] AuthManager + APIClient + LoginView
-- [ ] TemplateBundleSync（启动后从后端拉模板到 sandbox）
-- [ ] GameLibrarySidebar + GameLoader
-- [ ] PublishController + "Publish to iPhone" 按钮
-- [ ] 跨端联调（macOS → backend → iPhone 双向）
+- [x] MacOSInputAdapter（键鼠/触控板 → `/root/InputBridge` 9 属性）
+- [x] 后端 `GET /api/games/template-bundle` + `POST /api/games`
+- [x] AuthManager + APIClient + LoginView
+- [x] TemplateBundleSync（启动后从后端拉模板到 sandbox）
+- [x] GameLibrarySidebar + GameLoader
+- [x] PublishController + "Publish to iPhone" 按钮
+- [x] 跨端联调（macOS → backend → iPhone 双向）
+
+### V2 端到端契约速查
+
+| 概念 | 路径 / API |
+|---|---|
+| 设计分辨率 | 1194×834（与 iOS 一致；project.godot 配 `stretch_mode=canvas_items` + `aspect=keep`）|
+| 输入契约 | `/root/InputBridge` 9 属性（autoload，host 在 `_active/__motem_host__/input_bridge.gd`）|
+| macOS 键鼠映射 | `MacOSInputAdapter` 30Hz 泵：A/D=body_lean_x, W/S=body_lean_y, shift=is_ducking, 空格=is_hands_up, 鼠标=face_position |
+| 引擎工程根 | `~/Library/Application Support/MotemStudio/_active/`（host scene 常驻；loaded_game 子目录通过 token + add_child 切换）|
+| 资源路径重写 | rsync 后所有 `res://` 自动加 `loaded_game/` 前缀，`.godot/imported` 缓存随 zip 进 _active |
+| 模板同步 | `GET /api/games/template-bundle`（tar.gz + ETag/If-None-Match），登录后自动；解到 `sandbox/.template/`，autoload 脚本拷到 host |
+| 上传 | `POST /api/games`（multipart zip + meta；Bearer auth），id 缺失时后端用 `mac_<unix>_<md5>` |
+| 推送 | `game_ready` WebSocket（owner_id 路由），iOS 端复用已有 download 流程 |
 
 ## 回复语言
 

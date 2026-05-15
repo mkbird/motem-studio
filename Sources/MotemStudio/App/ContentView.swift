@@ -25,6 +25,15 @@ struct ContentView: View {
     }
 
     private var workspace: some View {
+        NavigationSplitView {
+            GameLibrarySidebar()
+                .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 360)
+        } detail: {
+            workspaceDetail
+        }
+    }
+
+    private var workspaceDetail: some View {
         VSplitView {
             GodotPreviewPane()
                 .frame(minHeight: 200, idealHeight: 360)

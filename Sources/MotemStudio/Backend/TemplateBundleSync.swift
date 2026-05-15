@@ -113,6 +113,17 @@ final class TemplateBundleSync: ObservableObject {
             .appendingPathComponent("_template_slowpath/CLAUDE.md")
         let backendClaudeMd = (try? String(contentsOf: backendClaudeMdURL, encoding: .utf8)) ?? ""
         AgentSandbox.applyBackendTemplate(claudeMd: backendClaudeMd, etag: etag)
+
+        // Promote the autoload scripts into the host project so any
+        // game referencing `AudioManager` / `GameManager` / `I18n` /
+        // `InputBridge` parses at engine boot. Skipping this is fine
+        // for hand-written hello-world games but breaks every iOS-
+        // generated game in the user's library.
+        let backendScripts = templateDir
+            .appendingPathComponent("_template/scripts", isDirectory: true)
+        if FileManager.default.fileExists(atPath: backendScripts.path) {
+            ActiveDirectorySync.installHostAutoloads(fromTemplate: backendScripts)
+        }
     }
 
     enum SyncError: Error, LocalizedError {

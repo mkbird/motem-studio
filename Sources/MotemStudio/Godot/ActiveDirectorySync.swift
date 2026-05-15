@@ -67,9 +67,12 @@ enum ActiveDirectorySync {
         process.arguments = [
             "-a",
             "--delete",
-            // Engine-managed caches: let Godot rebuild on its own
-            "--exclude=.godot",
-            // Source-control noise
+            // Preserve `.godot/` from backend-supplied zips: that's
+            // where the pre-built `imported/*.ctex` textures and font
+            // data live. macOS Motem Studio runs the engine on a host
+            // project rooted elsewhere, so Godot never re-runs its
+            // import pipeline for the loaded game — without these
+            // cached files every texture / font load fails.
             "--exclude=.git",
             "--exclude=.DS_Store",
             src,
@@ -189,6 +192,9 @@ enum ActiveDirectorySync {
         window/size/viewport_height=834
         window/stretch/mode=\"canvas_items\"
         window/stretch/aspect=\"keep\"
+
+        [input_devices]
+        pointing/emulate_touch_from_mouse=true
 
         [rendering]
         renderer/rendering_method.mobile=\"mobile\"
@@ -315,10 +321,21 @@ enum ActiveDirectorySync {
         var hand_gesture: String = "none"
         var hand_position: Vector2 = Vector2(0.5, 0.5)
         """
-        try? projectGodot.write(to: dir.appendingPathComponent("project.godot"), atomically: true, encoding: .utf8)
+        // project.godot and input_bridge.gd are seeded only when they
+        // don't already exist. `TemplateBundleSync.installHostAutoloads`
+        // writes more capable versions of both (4 autoloads + the
+        // upstream input_bridge.gd that listens to host messages), and
+        // we must not clobber its work the next time the engine boots.
+        let projectGodotURL = dir.appendingPathComponent("project.godot")
+        if !FileManager.default.fileExists(atPath: projectGodotURL.path) {
+            try? projectGodot.write(to: projectGodotURL, atomically: true, encoding: .utf8)
+        }
+        let inputBridgeURL = hostDir.appendingPathComponent("input_bridge.gd")
+        if !FileManager.default.fileExists(atPath: inputBridgeURL.path) {
+            try? inputBridgeGd.write(to: inputBridgeURL, atomically: true, encoding: .utf8)
+        }
         try? hostTscn.write(to: hostDir.appendingPathComponent("host.tscn"), atomically: true, encoding: .utf8)
         try? hostGd.write(to: hostDir.appendingPathComponent("host.gd"), atomically: true, encoding: .utf8)
-        try? inputBridgeGd.write(to: hostDir.appendingPathComponent("input_bridge.gd"), atomically: true, encoding: .utf8)
 
         // Initial token file (empty = nothing loaded yet)
         let tokenPath = hostDir.appendingPathComponent("reload_token.txt")
@@ -334,6 +351,92 @@ enum ActiveDirectorySync {
         let url = activeURL
             .appendingPathComponent("__motem_host__/reload_token.txt")
         try? token.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    /// Install `AudioManager` / `GameManager` / `I18n` / `InputBridge`
+    /// (plus the const `i18n_strings.gd` data file `I18n` depends on)
+    /// as engine autoloads under the host project. Called by
+    /// `TemplateBundleSync` right after it unpacks the backend bundle
+    /// so loaded games which reference these autoloads parse cleanly.
+    ///
+    /// `res://` references inside each script are rebased to
+    /// `res://loaded_game/...` — the originals expect a flat layout
+    /// rooted at the game directory, but our engine root holds the
+    /// host project with games nested under `loaded_game/`.
+    static func installHostAutoloads(fromTemplate templateScriptsDir: URL) {
+        let fm = FileManager.default
+        let hostDir = activeURL.appendingPathComponent("__motem_host__", isDirectory: true)
+        try? fm.createDirectory(at: hostDir, withIntermediateDirectories: true)
+
+        let autoloadScripts = [
+            "audio_manager.gd",
+            "game_manager.gd",
+            "i18n.gd",
+            "i18n_strings.gd",
+            "input_bridge.gd",
+        ]
+
+        for filename in autoloadScripts {
+            let src = templateScriptsDir.appendingPathComponent(filename)
+            guard fm.fileExists(atPath: src.path),
+                  let raw = try? String(contentsOf: src, encoding: .utf8) else { continue }
+            let rebased = rebaseResPathsInString(raw, prefix: "loaded_game")
+            let dst = hostDir.appendingPathComponent(filename)
+            try? rebased.write(to: dst, atomically: true, encoding: .utf8)
+        }
+
+        // Rewrite project.godot to register all four autoloads.
+        // Settings (display / rendering / boot_splash) stay identical
+        // to the stub project's defaults.
+        let projectGodot = """
+        config_version=5
+
+        [application]
+        config/name=\"MotemStudioHost\"
+        run/main_scene=\"res://__motem_host__/host.tscn\"
+        config/features=PackedStringArray(\"4.4\")
+        boot_splash/show_image=false
+        boot_splash/bg_color=Color(0.05, 0.05, 0.08, 1)
+
+        [autoload]
+        InputBridge=\"*res://__motem_host__/input_bridge.gd\"
+        GameManager=\"*res://__motem_host__/game_manager.gd\"
+        I18n=\"*res://__motem_host__/i18n.gd\"
+        AudioManager=\"*res://__motem_host__/audio_manager.gd\"
+
+        [display]
+        window/size/viewport_width=1194
+        window/size/viewport_height=834
+        window/stretch/mode=\"canvas_items\"
+        window/stretch/aspect=\"keep\"
+
+        [input_devices]
+        pointing/emulate_touch_from_mouse=true
+
+        [rendering]
+        renderer/rendering_method.mobile=\"mobile\"
+        """
+        try? projectGodot.write(
+            to: activeURL.appendingPathComponent("project.godot"),
+            atomically: true,
+            encoding: .utf8
+        )
+    }
+
+    /// In-place version of `rebaseResPaths` — used when we already
+    /// hold the file contents in memory (autoload script copies).
+    private static func rebaseResPathsInString(_ source: String, prefix: String) -> String {
+        let escaped = NSRegularExpression.escapedPattern(for: prefix)
+        guard let pattern = try? NSRegularExpression(pattern: "res://(?!\(escaped)/)") else {
+            return source
+        }
+        let range = NSRange(source.startIndex..<source.endIndex, in: source)
+        return pattern.stringByReplacingMatches(
+            in: source,
+            options: [],
+            range: range,
+            withTemplate: "res://\(prefix)/"
+        )
     }
 
     private static func validate(_ srcDir: URL) throws {

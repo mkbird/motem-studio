@@ -43,6 +43,13 @@ enum TerminalEnvironment {
         // the helper binary itself) can locate the main app.
         env["MOTEM_MCP_SOCKET"] = MCPConfigInjector.socketURL.path
 
+        // Redirect the user-level config dirs into the sandbox so each
+        // CLI does not load the user's personal CLAUDE.md / codex
+        // config. Gemini has no equivalent override; its
+        // `~/.gemini/GEMINI.md` may still merge in.
+        env["CLAUDE_CONFIG_DIR"] = AgentSandbox.claudeConfigDir.path
+        env["CODEX_HOME"] = AgentSandbox.codexHome.path
+
         return env
     }
 

@@ -6,7 +6,7 @@ struct ContentView: View {
     @AppStorage("DefaultAgent") private var defaultAgent: Agent = .claude
 
     @State private var agent: Agent = .claude
-    @State private var workingDir: URL = URL(fileURLWithPath: NSHomeDirectory())
+    @State private var workingDir: URL = AgentSandbox.directory
     @State private var titles: [Agent: String] = [:]
     @State private var spawned: Set<Agent> = []
     @State private var initialized = false

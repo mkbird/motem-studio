@@ -55,7 +55,7 @@ final class PublishController: ObservableObject {
             )
             state = .success(
                 gameId: response.gameId,
-                message: "Uploaded — your iPhone will receive it shortly."
+                message: L10n.string("publish.success")
             )
             // The new row should show up in Mine's list straight away.
             Task { await GameLibraryStore.shared.refresh() }

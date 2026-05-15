@@ -5,6 +5,7 @@ import SwiftUI
 /// before a user identity exists.
 struct LoginView: View {
     @ObservedObject private var auth = AuthManager.shared
+    @ObservedObject private var l10n = LocalizationManager.shared
 
     @State private var mode: Mode = .signIn
     @State private var email = ""
@@ -26,18 +27,18 @@ struct LoginView: View {
 
                 VStack(spacing: 14) {
                     if mode == .signUp {
-                        TextField("Display name", text: $displayName)
+                        TextField(L10n.string("auth.field.displayName"), text: $displayName)
                             .textFieldStyle(.roundedBorder)
                     }
-                    TextField("Email", text: $email)
+                    TextField(L10n.string("auth.field.email"), text: $email)
                         .textFieldStyle(.roundedBorder)
                         .textContentType(.emailAddress)
-                    SecureField("Password", text: $password)
+                    SecureField(L10n.string("auth.field.password"), text: $password)
                         .textFieldStyle(.roundedBorder)
                         .textContentType(mode == .signIn ? .password : .newPassword)
 
                     if showHostField {
-                        TextField("Backend host (e.g. 172.18.5.244)", text: $serverHost)
+                        TextField(L10n.string("auth.field.serverHost"), text: $serverHost)
                             .textFieldStyle(.roundedBorder)
                             .font(.system(.body, design: .monospaced))
                             .onChange(of: serverHost) { newValue in
@@ -59,12 +60,12 @@ struct LoginView: View {
 
                 HStack(spacing: 16) {
                     Button(action: toggleMode) {
-                        Text(mode == .signIn ? "Need an account? Sign up" : "Have an account? Sign in")
+                        Text(L10n.string(mode == .signIn ? "auth.toggle.toSignUp" : "auth.toggle.toSignIn"))
                             .font(.callout)
                     }
                     .buttonStyle(.link)
                     Button(action: { showHostField.toggle() }) {
-                        Text(showHostField ? "Hide server" : "Server settings…")
+                        Text(L10n.string(showHostField ? "auth.server.hide" : "auth.server.show"))
                             .font(.callout)
                     }
                     .buttonStyle(.link)
@@ -87,11 +88,9 @@ struct LoginView: View {
             Image(systemName: "gamecontroller.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(.tint)
-            Text("Motem Studio")
+            T("auth.brand.name")
                 .font(.title2.weight(.semibold))
-            Text(mode == .signIn
-                 ? "Sign in to publish games to your iPhone"
-                 : "Create an account that syncs with deskrobot")
+            T(mode == .signIn ? "auth.signIn.subtitle" : "auth.signUp.subtitle")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -106,7 +105,7 @@ struct LoginView: View {
                         .controlSize(.small)
                         .scaleEffect(0.7)
                 }
-                Text(mode == .signIn ? "Sign in" : "Sign up")
+                T(mode == .signIn ? "auth.button.signIn" : "auth.button.signUp")
                     .font(.body.weight(.medium))
             }
             .frame(maxWidth: 220, minHeight: 28)

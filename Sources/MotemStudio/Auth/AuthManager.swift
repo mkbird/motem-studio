@@ -78,7 +78,7 @@ final class AuthManager: ObservableObject {
     func handleUnauthorized() {
         guard isLoggedIn else { return }
         logout()
-        errorMessage = "Session expired. Please sign in again."
+        errorMessage = L10n.string("auth.error.sessionExpired")
     }
 
     // MARK: - Persistence
@@ -128,7 +128,7 @@ final class AuthManager: ObservableObject {
         defer { isWorking = false }
 
         guard let url = URL(string: path, relativeTo: BackendConfig.baseURL) else {
-            errorMessage = "Bad backend URL"
+            errorMessage = L10n.string("auth.error.badURL")
             return
         }
         var request = URLRequest(url: url)
@@ -141,7 +141,7 @@ final class AuthManager: ObservableObject {
         do {
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else {
-                errorMessage = "Network request failed"
+                errorMessage = L10n.string("auth.error.network")
                 return
             }
             if !(200..<300).contains(http.statusCode) {
@@ -163,7 +163,7 @@ final class AuthManager: ObservableObject {
         defer { isWorking = false }
 
         guard let url = URL(string: path, relativeTo: BackendConfig.baseURL) else {
-            errorMessage = "Bad backend URL"
+            errorMessage = L10n.string("auth.error.badURL")
             return .failure
         }
         var request = URLRequest(url: url)
@@ -176,7 +176,7 @@ final class AuthManager: ObservableObject {
         do {
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else {
-                errorMessage = "Network request failed"
+                errorMessage = L10n.string("auth.error.network")
                 return .failure
             }
             if !(200..<300).contains(http.statusCode) {
@@ -243,6 +243,6 @@ final class AuthManager: ObservableObject {
            let detail = json["detail"] as? String {
             return detail
         }
-        return "Request failed (HTTP \(status))"
+        return L10n.string("auth.error.httpStatus", status)
     }
 }

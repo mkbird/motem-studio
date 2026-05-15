@@ -25,11 +25,11 @@ final class APIClient {
             case .httpStatus(let code, let message):
                 return "HTTP \(code): \(message)"
             case .decode(let err):
-                return "Decode failed: \(err.localizedDescription)"
+                return L10n.string("api.error.decode", err.localizedDescription)
             case .transport(let err):
-                return "Network error: \(err.localizedDescription)"
+                return L10n.string("api.error.network", err.localizedDescription)
             case .missingToken:
-                return "Not logged in"
+                return L10n.string("api.error.notLoggedIn")
             }
         }
     }

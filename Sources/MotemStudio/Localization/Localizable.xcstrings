@@ -287,6 +287,202 @@
           "stringUnit" : { "state" : "translated", "value" : "Motem Studio 会在每个工作目录的 .mcp.json 中注册自身，供 agent 调用 godot_preview / godot_reload / godot_stop / godot_status。" }
         }
       }
+    },
+    "auth.brand.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Motem Studio" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Motem Studio" } }
+      }
+    },
+    "auth.signIn.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in to publish games to your iPhone" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录后即可把游戏发布到 iPhone" } }
+      }
+    },
+    "auth.signUp.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create an account that syncs with deskrobot" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "注册一个能与 deskrobot 同步的账号" } }
+      }
+    },
+    "auth.field.displayName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Display name" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示名" } }
+      }
+    },
+    "auth.field.email" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Email" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "邮箱" } }
+      }
+    },
+    "auth.field.password" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Password" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "密码" } }
+      }
+    },
+    "auth.field.serverHost" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Backend host (e.g. 172.18.5.244)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "后端地址（例如 172.18.5.244）" } }
+      }
+    },
+    "auth.button.signIn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录" } }
+      }
+    },
+    "auth.button.signUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign up" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "注册" } }
+      }
+    },
+    "auth.toggle.toSignUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Need an account? Sign up" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "还没有账号？点此注册" } }
+      }
+    },
+    "auth.toggle.toSignIn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Have an account? Sign in" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已有账号？返回登录" } }
+      }
+    },
+    "auth.server.show" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Server settings…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "服务器设置…" } }
+      }
+    },
+    "auth.server.hide" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hide server" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "隐藏服务器设置" } }
+      }
+    },
+    "auth.error.badURL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Bad backend URL" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "后端 URL 无效" } }
+      }
+    },
+    "auth.error.network" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Network request failed" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "网络请求失败" } }
+      }
+    },
+    "auth.error.httpStatus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Request failed (HTTP %d)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请求失败（HTTP %d）" } }
+      }
+    },
+    "auth.error.sessionExpired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Session expired. Please sign in again." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录已过期，请重新登录。" } }
+      }
+    },
+    "library.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Library" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "游戏库" } }
+      }
+    },
+    "library.refresh" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Refresh" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "刷新" } }
+      }
+    },
+    "library.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No games yet" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "还没有游戏" } }
+      }
+    },
+    "library.empty.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ask the agent below to make one — it will appear here after you Publish." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "在下方让 agent 创作一个游戏，发布后会出现在这里。" } }
+      }
+    },
+    "publish.button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Publish to iPhone" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "发布到 iPhone" } }
+      }
+    },
+    "publish.state.packaging" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Packaging…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在打包…" } }
+      }
+    },
+    "publish.state.uploading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Uploading…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在上传…" } }
+      }
+    },
+    "publish.success" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Uploaded — your iPhone will receive it shortly." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已上传 — 你的 iPhone 很快会收到。" } }
+      }
+    },
+    "api.error.notLoggedIn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not logged in" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "尚未登录" } }
+      }
+    },
+    "api.error.decode" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Decode failed: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "解析失败：%@" } }
+      }
+    },
+    "api.error.network" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Network error: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "网络错误：%@" } }
+      }
     }
   }
 }

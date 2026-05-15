@@ -144,9 +144,9 @@ struct GodotPreviewPane: View {
         case .idle:
             EmptyView()
         case .packaging:
-            statusChip(icon: "archivebox", text: "Packaging…", tint: .secondary)
+            statusChip(icon: "archivebox", text: L10n.string("publish.state.packaging"), tint: .secondary)
         case .uploading:
-            statusChip(icon: "arrow.up.circle", text: "Uploading…", tint: .secondary)
+            statusChip(icon: "arrow.up.circle", text: L10n.string("publish.state.uploading"), tint: .secondary)
         case .success(_, let message):
             statusChip(icon: "checkmark.circle.fill", text: message, tint: .green)
         case .failed(let reason):
@@ -180,7 +180,7 @@ struct GodotPreviewPane: View {
 
     private var publishButton: some View {
         Button(action: handlePublish) {
-            Label("Publish to iPhone", systemImage: "iphone.gen3")
+            Label(L10n.string("publish.button"), systemImage: "iphone.gen3")
                 .font(.callout.weight(.medium))
         }
         .buttonStyle(.borderedProminent)

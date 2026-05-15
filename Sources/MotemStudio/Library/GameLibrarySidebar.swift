@@ -7,6 +7,7 @@ import SwiftUI
 struct GameLibrarySidebar: View {
     @ObservedObject private var store = GameLibraryStore.shared
     @ObservedObject private var auth = AuthManager.shared
+    @ObservedObject private var l10n = LocalizationManager.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -35,7 +36,7 @@ struct GameLibrarySidebar: View {
 
     private var header: some View {
         HStack {
-            Text("Library")
+            T("library.title")
                 .font(.headline)
             Spacer()
             Button(action: { Task { await store.refresh() } }) {
@@ -46,7 +47,7 @@ struct GameLibrarySidebar: View {
                 }
             }
             .buttonStyle(.borderless)
-            .help("Refresh")
+            .help(L10n.string("library.refresh"))
             .disabled(store.isRefreshing)
         }
         .padding(.horizontal, 14)
@@ -59,10 +60,10 @@ struct GameLibrarySidebar: View {
             Image(systemName: "gamecontroller")
                 .font(.system(size: 32, weight: .light))
                 .foregroundStyle(.secondary)
-            Text("No games yet")
+            T("library.empty.title")
                 .font(.callout)
                 .foregroundStyle(.secondary)
-            Text("Ask the agent below to make one — it will appear here after you Publish.")
+            T("library.empty.subtitle")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)

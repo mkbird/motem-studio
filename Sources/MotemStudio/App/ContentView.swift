@@ -19,9 +19,27 @@ struct ContentView: View {
         // line up with the same identity on iPhone.
         if auth.isLoggedIn {
             workspace
+        } else if auth.isBootstrapping {
+            // A valid refresh token is on disk; we're trying to swap
+            // it for a fresh access token before deciding whether to
+            // show the login form. Holding here avoids flashing the
+            // form for users whose session is actually fine.
+            sessionRestoreView
         } else {
             LoginView()
         }
+    }
+
+    private var sessionRestoreView: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .controlSize(.large)
+            T("auth.restoring.title")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+        .frame(minWidth: 520, minHeight: 480)
+        .background(Color(NSColor.windowBackgroundColor).ignoresSafeArea())
     }
 
     private var workspace: some View {

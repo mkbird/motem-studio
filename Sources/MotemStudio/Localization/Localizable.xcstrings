@@ -79,6 +79,83 @@
         }
       }
     },
+    "settings.account.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Account" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "账号" }
+        }
+      }
+    },
+    "settings.account.notSignedIn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Not signed in" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "未登录" }
+        }
+      }
+    },
+    "settings.account.logout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Sign Out" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "退出登录" }
+        }
+      }
+    },
+    "settings.account.logout.cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Cancel" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "取消" }
+        }
+      }
+    },
+    "settings.account.logout.confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Sign Out" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "退出登录" }
+        }
+      }
+    },
+    "settings.account.logout.confirm.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Sign out of Motem Studio?" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "退出 Motem Studio？" }
+        }
+      }
+    },
+    "settings.account.logout.confirm.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "This clears your Motem Studio session on this Mac. Agent CLI logins are not changed." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "这会清除此 Mac 上的 Motem Studio 登录状态，不会影响各 Agent CLI 自己的登录。" }
+        }
+      }
+    },
     "terminal.notFound.title.claude" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -405,6 +482,13 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Session expired. Please sign in again." } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录已过期，请重新登录。" } }
+      }
+    },
+    "auth.restoring.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Restoring your session…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在恢复登录…" } }
       }
     },
     "library.title" : {

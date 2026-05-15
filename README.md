@@ -83,6 +83,7 @@ Currently implemented:
 - [x] Custom game-creation app icon asset
 - [x] Project working directory + zsh `-ilc` wrap
 - [x] Language: Follow System / Chinese / English with live switching
+- [x] Settings account sign-out
 - [x] Settings panel scaffold
 
 Next (see `plan.md`):

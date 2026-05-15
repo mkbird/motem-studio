@@ -75,7 +75,7 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 | `Sources/MotemStudio/Localization/AppLanguage.swift` | 枚举 `system / chinese / english` |
 | `Sources/MotemStudio/Localization/Localizable.xcstrings` | String Catalog (Xcode 15+)，sourceLanguage=en，含 en + zh-Hans。新增 key 必须同时补齐两种语言 |
 | `Sources/MotemStudio/Resources/Assets.xcassets/AppIcon.appiconset` | macOS AppIcon，多尺寸 PNG 由生成图标源图导出 |
-| `Sources/MotemStudio/Settings/GeneralSettingsView.swift` | 语言选择 + 默认 agent 选择 |
+| `Sources/MotemStudio/Settings/GeneralSettingsView.swift` | 账号退出登录、语言选择、默认 agent 选择 |
 | `Sources/MotemStudio/Resources/MotemStudio.entitlements` | App Sandbox = false（需要 spawn 任意 binary）、`allow-unsigned-executable-memory` / `allow-jit` for hardened runtime |
 | `project.yml` | XcodeGen 配置；SwiftTerm SPM 依赖；`GENERATE_INFOPLIST_FILE=NO` + 显式 `info.properties` |
 
@@ -122,6 +122,7 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 - [x] 多 agent 顶部切换 + 会话保活
 - [x] 跟随系统 / 中文 / 英文 三种语言，运行时切换
 - [x] 默认 agent 设置
+- [x] Settings 中退出 Motem Studio 登录
 - [ ] 项目（workspace）管理 + 最近项目
 - [ ] 文件树 + 单文件预览
 - [ ] CLI 缺失时的引导安装页（目前只在终端里 feed 提示）

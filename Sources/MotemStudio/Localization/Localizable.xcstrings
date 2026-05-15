@@ -244,6 +244,61 @@
         }
       }
     },
+    "terminal.menu.copy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Copy" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "复制" }
+        }
+      }
+    },
+    "terminal.menu.paste" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Paste" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "粘贴" }
+        }
+      }
+    },
+    "terminal.menu.pasteAsPath" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Paste as Path" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "作为路径粘贴" }
+        }
+      }
+    },
+    "terminal.menu.selectAll" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Select All" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "全选" }
+        }
+      }
+    },
+    "terminal.menu.clearBuffer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Clear Buffer" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "清空缓冲" }
+        }
+      }
+    },
     "project.open" : {
       "extractionState" : "manual",
       "localizations" : {

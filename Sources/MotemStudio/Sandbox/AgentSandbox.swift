@@ -40,6 +40,14 @@ enum AgentSandbox {
         directory.appendingPathComponent(".template", isDirectory: true)
     }
 
+    /// Holding pen for images the user drops onto the terminal or
+    /// pastes from the clipboard. `AgentTerminalView` writes here and
+    /// then inserts the absolute path at the PTY cursor so the agent
+    /// CLI can read it as an attachment.
+    static var pastesDirectory: URL {
+        directory.appendingPathComponent(".pastes", isDirectory: true)
+    }
+
     /// Lay down the sandbox files needed for every agent CLI to start
     /// fresh inside Motem Studio. Idempotent — safe to call on every
     /// app launch; existing project files (user-generated games) are
@@ -47,6 +55,7 @@ enum AgentSandbox {
     static func ensureLayout() {
         let fm = FileManager.default
         try? fm.createDirectory(at: directory, withIntermediateDirectories: true)
+        try? fm.createDirectory(at: pastesDirectory, withIntermediateDirectories: true)
 
         // Write the managed CLAUDE / AGENTS / GEMINI files with whatever
         // backend-template content is currently cached (or the Motem
@@ -220,6 +229,15 @@ enum AgentSandbox {
       `godot_preview` exactly once.
     - For iterative tweaks, edit files in place, then call
       `godot_reload`.
+
+    ## Image and file attachments
+
+    When the user drops a file onto the terminal, or pastes a clipboard
+    image, Motem Studio writes the file to this sandbox's `.pastes/`
+    directory (for clipboard images) or uses the file's original path
+    (for Finder drops) and inserts the absolute path at the PTY cursor.
+    Treat any such path as an attachment the user wants you to read —
+    open the file directly rather than asking them to upload it again.
 
     ## Backend template mirror
 

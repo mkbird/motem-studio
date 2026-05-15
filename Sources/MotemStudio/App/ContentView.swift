@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var l10n: LocalizationManager
+    @ObservedObject private var auth = AuthManager.shared
     @ObservedObject private var preview = GodotPreviewController.shared
     @AppStorage("DefaultAgent") private var defaultAgent: Agent = .claude
 
@@ -12,6 +13,18 @@ struct ContentView: View {
     @State private var initialized = false
 
     var body: some View {
+        // The login gate guards every other piece of the workspace —
+        // sandbox layout, MCP bridge, and Godot engine all sit behind
+        // an authenticated session so per-user templates and uploads
+        // line up with the same identity on iPhone.
+        if auth.isLoggedIn {
+            workspace
+        } else {
+            LoginView()
+        }
+    }
+
+    private var workspace: some View {
         VSplitView {
             GodotPreviewPane()
                 .frame(minHeight: 200, idealHeight: 360)

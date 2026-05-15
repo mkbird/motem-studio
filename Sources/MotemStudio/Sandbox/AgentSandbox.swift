@@ -38,6 +38,14 @@ enum AgentSandbox {
         directory.appendingPathComponent(".config/codex", isDirectory: true)
     }
 
+    /// Mirror of the backend's `_template/` skeleton, refreshed by
+    /// `TemplateBundleSync` after each login. Claude / Codex / Gemini
+    /// read from here when authoring new Godot projects so the macOS
+    /// scaffold stays in lock-step with what the iOS pipeline expects.
+    static var templateDirectory: URL {
+        directory.appendingPathComponent(".template", isDirectory: true)
+    }
+
     /// Lay down the sandbox files needed for every agent CLI to start
     /// fresh inside Motem Studio. Idempotent — safe to call on every
     /// app launch; existing project files (user-generated games) are
@@ -48,13 +56,12 @@ enum AgentSandbox {
         try? fm.createDirectory(at: claudeConfigDir, withIntermediateDirectories: true)
         try? fm.createDirectory(at: codexHome, withIntermediateDirectories: true)
 
-        // Always rewrite the managed CLAUDE / AGENTS / GEMINI files —
-        // these are owned by the app, and a comment at the top tells
-        // the user not to hand-edit them.
-        for filename in ["CLAUDE.md", "AGENTS.md", "GEMINI.md"] {
-            let url = directory.appendingPathComponent(filename)
-            try? promptFileContents.write(to: url, atomically: true, encoding: .utf8)
-        }
+        // Write the managed CLAUDE / AGENTS / GEMINI files with whatever
+        // backend-template content is currently cached (or the Motem
+        // section only on first launch — the user is expected to log in
+        // before authoring, which triggers `TemplateBundleSync.sync()`
+        // and rewrites these files with the merged content).
+        writePromptFiles(backendSection: nil)
 
         // Halt the project-level memory walk at the sandbox boundary.
         // A .git directory is the most reliable marker that all three
@@ -70,19 +77,63 @@ enum AgentSandbox {
                 try process.run()
                 process.waitUntilExit()
             } catch {
-                // Fallback: just touch the .git directory marker. Some
-                // CLIs treat an empty `.git` as enough to halt the walk.
+                // No CLI surface for the absence of git — silently
+                // skip; the memory walk will simply reach $HOME and
+                // pick up whatever the user has there. Logged-in
+                // scenarios still see the sandbox-scoped CLAUDE.md as
+                // the closest match.
                 try? fm.createDirectory(at: gitDir, withIntermediateDirectories: true)
             }
         }
     }
 
+    /// Called by `TemplateBundleSync` after a successful pull. Re-renders
+    /// `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` with the backend's
+    /// `_template_slowpath/CLAUDE.md` appended inside a fenced marker
+    /// block so subsequent syncs can replace just the backend slice.
+    static func applyBackendTemplate(claudeMd: String, etag: String) {
+        let trimmed = claudeMd.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        writePromptFiles(backendSection: BackendSection(content: trimmed, etag: etag))
+    }
+
+    // MARK: - Prompt rendering
+
+    private struct BackendSection {
+        let content: String
+        let etag: String
+    }
+
+    private static func writePromptFiles(backendSection: BackendSection?) {
+        let body = renderPrompt(backendSection: backendSection)
+        for filename in ["CLAUDE.md", "AGENTS.md", "GEMINI.md"] {
+            let url = directory.appendingPathComponent(filename)
+            try? body.write(to: url, atomically: true, encoding: .utf8)
+        }
+    }
+
+    private static func renderPrompt(backendSection: BackendSection?) -> String {
+        var output = motemPromptSection
+        if let backendSection {
+            output += "\n\n<!-- managed: backend-template version=\(backendSection.etag) -->\n"
+            output += backendSection.content
+            if !backendSection.content.hasSuffix("\n") { output += "\n" }
+            output += "<!-- /managed: backend-template -->\n"
+        }
+        return output
+    }
+
     // MARK: - Prompt
 
-    private static let promptFileContents: String = """
+    /// The Motem-Studio-owned section. After `TemplateBundleSync`
+    /// pulls from the backend, the upstream `_template_slowpath/
+    /// CLAUDE.md` is appended in a separate fenced block.
+    private static let motemPromptSection: String = """
+    <!-- managed: motem -->
     <!--
-      This file is managed by Motem Studio and rewritten on every app
-      launch. Do not edit it by hand — your changes will be lost.
+      This file is managed by Motem Studio and rewritten when the app
+      launches or syncs templates from the backend. Do not edit it by
+      hand — your changes will be lost.
     -->
 
     # Motem Studio Environment
@@ -177,5 +228,15 @@ enum AgentSandbox {
       `godot_preview` exactly once.
     - For iterative tweaks, edit files in place, then call
       `godot_reload`.
+
+    ## Backend template mirror
+
+    A mirror of the backend's Godot skeleton lives at `.template/` in
+    this sandbox. Read scripts from there (e.g. `.template/_template/
+    scripts/input_bridge.gd`) rather than reinventing them — they are
+    the same files iOS-side games are generated against. When the
+    mirror is empty, the backend has not been reached yet (run a login
+    flow first).
+    <!-- /managed: motem -->
     """
 }

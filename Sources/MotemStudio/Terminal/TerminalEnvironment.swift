@@ -2,9 +2,8 @@ import Foundation
 
 enum TerminalEnvironment {
 
-    /// Build the environment passed to the PTY-spawned `claude` process.
-    /// Must NOT include any `CLAUDE_*` or `ANTHROPIC_*` variables — `claude`
-    /// is responsible for its own auth and config.
+    /// Build the environment passed to the PTY-spawned agent process.
+    /// Agent CLIs are responsible for their own auth and config.
     static func build(workingDirectory: URL, appLanguage: AppLanguage) -> [String: String] {
         let parent = ProcessInfo.processInfo.environment
         var env: [String: String] = [:]
@@ -18,7 +17,9 @@ enum TerminalEnvironment {
             if let value = parent[key] { env[key] = value }
         }
 
-        env["PATH"] = resolvedPath(shell: parent["SHELL"] ?? "/bin/zsh")
+        let shell = parent["SHELL"] ?? "/bin/zsh"
+
+        env["PATH"] = resolvedPath(shell: shell)
             ?? "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 
         env["TERM"] = "xterm-256color"
@@ -43,13 +44,6 @@ enum TerminalEnvironment {
         // the helper binary itself) can locate the main app.
         env["MOTEM_MCP_SOCKET"] = MCPConfigInjector.socketURL.path
 
-        // Redirect the user-level config dirs into the sandbox so each
-        // CLI does not load the user's personal CLAUDE.md / codex
-        // config. Gemini has no equivalent override; its
-        // `~/.gemini/GEMINI.md` may still merge in.
-        env["CLAUDE_CONFIG_DIR"] = AgentSandbox.claudeConfigDir.path
-        env["CODEX_HOME"] = AgentSandbox.codexHome.path
-
         return env
     }
 
@@ -73,4 +67,5 @@ enum TerminalEnvironment {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return (result?.isEmpty == false) ? result : nil
     }
+
 }

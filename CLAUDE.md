@@ -67,13 +67,14 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 | `Sources/MotemStudio/App/ContentView.swift` | 顶部 agent picker；`ZStack` 持久化多 agent 会话；`@AppStorage("DefaultAgent")` 决定首次 spawn 哪个 |
 | `Sources/MotemStudio/Terminal/Agent.swift` | 枚举 `claude / codex / gemini`，带 `executableName` / `installCommand` / `brandColor` / `displayName` |
 | `Sources/MotemStudio/Terminal/AgentBinaryLocator.swift` | 走 `zsh -ilc "command -v <bin>"` 解析路径（关键：-i 才加载 .zshrc，否则 nvm/fnm/npm prefix 用户全找不到） |
-| `Sources/MotemStudio/Terminal/TerminalEnvironment.swift` | 给 PTY 注入的环境变量：PATH 走 login shell 解析、`TERM=xterm-256color` + `COLORTERM=truecolor` + `FORCE_COLOR=1`，按 AppLanguage 设 LANG/LC_ALL。**严禁**注入任何 `CLAUDE_*` / `ANTHROPIC_*` 变量，让 CLI 自己走自己的认证 |
+| `Sources/MotemStudio/Terminal/TerminalEnvironment.swift` | 给 PTY 注入的环境变量：PATH 走 login shell 解析、`TERM=xterm-256color` + `COLORTERM=truecolor` + `FORCE_COLOR=1`，按 AppLanguage 设 LANG/LC_ALL。不覆盖 Claude / Codex / Gemini 的默认 home/config，复用用户本机 CLI 已登录会话。**严禁**注入任何认证 token，让 CLI 自己走自己的认证 |
 | `Sources/MotemStudio/Terminal/AgentTerminalView.swift` | SwiftTerm 子类，组合 `TerminalCoordinator` 做 delegate；找不到 binary 时 feed 红色错误 + 本地化安装提示 |
 | `Sources/MotemStudio/Terminal/TerminalHostView.swift` | SwiftUI 桥；`DispatchQueue.main.async { view.start() }` 必须延后到下一帧，否则首帧 cols/rows=0 会破坏 ink TUI |
 | `Sources/MotemStudio/Localization/LocalizationManager.swift` | `@Published var language`；`bundle` 跟着切；监听 `NSLocale.currentLocaleDidChangeNotification` 让 follow-system 模式响应系统改语言 |
 | `Sources/MotemStudio/Localization/L10n.swift` | `L10n.string(key, args)` + `T("key")` view 包装。**所有 SwiftUI 文本必须走 `T(...)`，不能直接 `Text("...")`**——原生 `Text(LocalizedStringKey)` 只读 `Bundle.main`，不响应运行时切换 |
 | `Sources/MotemStudio/Localization/AppLanguage.swift` | 枚举 `system / chinese / english` |
 | `Sources/MotemStudio/Localization/Localizable.xcstrings` | String Catalog (Xcode 15+)，sourceLanguage=en，含 en + zh-Hans。新增 key 必须同时补齐两种语言 |
+| `Sources/MotemStudio/Resources/Assets.xcassets/AppIcon.appiconset` | macOS AppIcon，多尺寸 PNG 由生成图标源图导出 |
 | `Sources/MotemStudio/Settings/GeneralSettingsView.swift` | 语言选择 + 默认 agent 选择 |
 | `Sources/MotemStudio/Resources/MotemStudio.entitlements` | App Sandbox = false（需要 spawn 任意 binary）、`allow-unsigned-executable-memory` / `allow-jit` for hardened runtime |
 | `project.yml` | XcodeGen 配置；SwiftTerm SPM 依赖；`GENERATE_INFOPLIST_FILE=NO` + 显式 `info.properties` |
@@ -82,7 +83,7 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 
 参考 Anthropic 法律页 `code.claude.com/docs/en/legal-and-compliance` 与 2026-02 OAuth 政策澄清。三家 CLI 都按同一套边界处理：
 
-- **不读、不转发任何 CLI 的凭据**。`~/.claude/`、`~/.codex/`、`~/.gemini/` 全程不碰，每家 CLI 自己处理认证。
+- **不读、不转发任何 CLI 的凭据**。`~/.claude/`、`~/.codex/`、`~/.gemini/` 全程不碰，每家 CLI 自己处理认证；Claude / Codex / Gemini 直接复用各自默认 home 下已经存在的本机登录态。
 - **不打包任何 CLI 二进制**，引导用户自己 `npm i -g`。
 - **不做后台/调度/批量/并行 agent**。即使技术上能做，会触发 Anthropic "non ordinary individual usage" 条款。任何"自动化"功能（一键 loop、定时任务、多 agent 并行）必须留给未来的 API key 模式，不能进 MVP。
 - **不在产品名/营销文案里出现 "Claude Code" 当作产品名**。App 内描述用 "works with Claude Code" 这种 nominative fair use 即可。上线前 `sales@anthropic.com` 发邮件做商标确认。
@@ -91,6 +92,7 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 ## Constraints — 技术
 
 - **macOS GUI 进程从 launchd 启动，不加载 `.zshrc`**。所以 `AgentBinaryLocator` 和 `TerminalEnvironment.resolvedPath` 必须用 `-ilc`（interactive login），不能用 `-l -c`。否则 nvm/fnm/自定义 npm prefix 的用户的 binary 全部找不到。
+- **Claude / Codex / Gemini 不能覆盖默认认证目录**。否则 Motem Studio 会让 CLI 使用 sandbox 里的空配置目录，无法复用用户普通终端已经登录好的 `~/.claude` / `~/.codex` / `~/.gemini` 登录态，触发重新 OAuth。Motem 不读取这些文件，只让 CLI 自己按默认规则使用它们。
 - **SwiftTerm 的 `LocalProcessTerminalView` 自己 conform 了 `LocalProcessTerminalViewDelegate` 的同名非 open 方法**。子类再 conform 会编译报错 "overriding non-open instance method outside of its defining module"。解法：**组合模式**——单独的 `TerminalCoordinator` 对象做 delegate，弱引用回主类。
 - **SwiftUI `Text("key")` 不支持运行时切语言**。它只读 `Bundle.main`。所有可见文案必须走 `T("key")` / `LocalizedText`，从 `LocalizationManager.shared.bundle` 取。
 - **切换 agent 不能重启 PTY**。`ContentView` 用 `ZStack` + `Set<Agent> spawned` 按需创建并保活，靠 `.opacity` + `.allowsHitTesting` 控制可见性。用 `.id(sessionID)` + `onChange` 重建会杀掉用户当前会话。
@@ -116,6 +118,7 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 - [x] PTY 嵌入终端（SwiftTerm）
 - [x] login shell PATH 解析
 - [x] 三家 agent CLI 探测 + 缺失时本地化安装提示
+- [x] 游戏创作主题 AppIcon 资产
 - [x] 多 agent 顶部切换 + 会话保活
 - [x] 跟随系统 / 中文 / 英文 三种语言，运行时切换
 - [x] 默认 agent 设置

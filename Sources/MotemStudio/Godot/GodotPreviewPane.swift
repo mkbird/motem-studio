@@ -17,15 +17,19 @@ import SwiftGodotKit
 struct GodotPreviewPane: View {
 
     @ObservedObject private var controller = GodotPreviewController.shared
+    @ObservedObject private var publish = PublishController.shared
     @EnvironmentObject private var l10n: LocalizationManager
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topTrailing) {
             engineLayer
 
             overlay
                 .opacity(showEngine ? 0 : 1)
                 .allowsHitTesting(!showEngine)
+
+            publishOverlay
+                .padding(12)
         }
         .frame(minHeight: 240)
         .background(
@@ -122,5 +126,80 @@ struct GodotPreviewPane: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
         }
+    }
+
+    // MARK: - Publish overlay (top-right)
+
+    @ViewBuilder
+    private var publishOverlay: some View {
+        HStack(spacing: 10) {
+            publishStatusChip
+            publishButton
+        }
+    }
+
+    @ViewBuilder
+    private var publishStatusChip: some View {
+        switch publish.state {
+        case .idle:
+            EmptyView()
+        case .packaging:
+            statusChip(icon: "archivebox", text: "Packaging…", tint: .secondary)
+        case .uploading:
+            statusChip(icon: "arrow.up.circle", text: "Uploading…", tint: .secondary)
+        case .success(_, let message):
+            statusChip(icon: "checkmark.circle.fill", text: message, tint: .green)
+        case .failed(let reason):
+            statusChip(icon: "xmark.octagon.fill", text: reason, tint: .red)
+        }
+    }
+
+    private func statusChip(icon: String, text: String, tint: Color) -> some View {
+        HStack(spacing: 6) {
+            if icon == "arrow.up.circle" || icon == "archivebox" {
+                ProgressView().controlSize(.small).scaleEffect(0.7)
+            } else {
+                Image(systemName: icon).foregroundStyle(tint)
+            }
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule().fill(.regularMaterial)
+        )
+        .overlay(
+            Capsule().stroke(tint.opacity(0.4), lineWidth: 1)
+        )
+        .frame(maxWidth: 320)
+    }
+
+    private var publishButton: some View {
+        Button(action: handlePublish) {
+            Label("Publish to iPhone", systemImage: "iphone.gen3")
+                .font(.callout.weight(.medium))
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.regular)
+        .disabled(!canPublish)
+    }
+
+    private var canPublish: Bool {
+        guard controller.currentProjectDir != nil else { return false }
+        switch publish.state {
+        case .packaging, .uploading:
+            return false
+        default:
+            return true
+        }
+    }
+
+    private func handlePublish() {
+        guard let dir = controller.currentProjectDir else { return }
+        Task { await publish.publish(projectDir: dir) }
     }
 }

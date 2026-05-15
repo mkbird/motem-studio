@@ -80,6 +80,7 @@ Currently implemented:
 - [x] PTY-backed terminal (SwiftTerm)
 - [x] Login-shell PATH resolution (works with nvm/volta/Homebrew)
 - [x] `claude` binary detection + missing-CLI message
+- [x] Custom game-creation app icon asset
 - [x] Project working directory + zsh `-ilc` wrap
 - [x] Language: Follow System / Chinese / English with live switching
 - [x] Settings panel scaffold

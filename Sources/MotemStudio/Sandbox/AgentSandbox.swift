@@ -6,16 +6,18 @@ import Foundation
 /// 1. **Pin cwd** so each CLI's project-level memory walk (`CLAUDE.md` /
 ///    `AGENTS.md` / `GEMINI.md`) stops at this directory and never leaks
 ///    into the user's home or unrelated projects.
-/// 2. **Override user-level config dirs** via `CLAUDE_CONFIG_DIR` and
-///    `CODEX_HOME` so the CLIs read their per-user settings from
-///    sandbox-scoped folders, not `~/.claude` or `~/.codex`.
+/// 2. **Keep first-party CLI auth/config in the CLI's own default home**.
+///    Claude / Codex / Gemini deliberately keep their default
+///    `~/.claude` / `~/.codex` / `~/.gemini` homes so each local CLI can
+///    reuse its existing OAuth session. Motem does not read or copy
+///    those credentials.
 /// 3. **Inject a Motem Studio prompt** as the project-level memory
 ///    file, telling the agent what tools it has and how to use Godot 4
 ///    in this environment.
 ///
-/// Gemini does not expose a clean home override; for now we accept that
-/// `~/.gemini/GEMINI.md` may still merge in. The sandbox-local
-/// `GEMINI.md` is layered on top.
+/// Gemini does not expose a clean home override; we intentionally let it
+/// use its default home. The sandbox-local `GEMINI.md` is layered on top
+/// as project memory.
 enum AgentSandbox {
 
     static let directory: URL = {
@@ -29,14 +31,6 @@ enum AgentSandbox {
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
     }()
-
-    static var claudeConfigDir: URL {
-        directory.appendingPathComponent(".config/claude", isDirectory: true)
-    }
-
-    static var codexHome: URL {
-        directory.appendingPathComponent(".config/codex", isDirectory: true)
-    }
 
     /// Mirror of the backend's `_template/` skeleton, refreshed by
     /// `TemplateBundleSync` after each login. Claude / Codex / Gemini
@@ -53,8 +47,6 @@ enum AgentSandbox {
     static func ensureLayout() {
         let fm = FileManager.default
         try? fm.createDirectory(at: directory, withIntermediateDirectories: true)
-        try? fm.createDirectory(at: claudeConfigDir, withIntermediateDirectories: true)
-        try? fm.createDirectory(at: codexHome, withIntermediateDirectories: true)
 
         // Write the managed CLAUDE / AGENTS / GEMINI files with whatever
         // backend-template content is currently cached (or the Motem

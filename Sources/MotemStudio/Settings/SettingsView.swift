@@ -7,7 +7,11 @@ struct SettingsView: View {
                 .tabItem {
                     Label(L10n.string("settings.tab.general"), systemImage: "gearshape")
                 }
+            PreviewSettingsView()
+                .tabItem {
+                    Label(L10n.string("settings.tab.preview"), systemImage: "play.rectangle")
+                }
         }
-        .frame(width: 480, height: 320)
+        .frame(width: 540, height: 360)
     }
 }

@@ -39,6 +39,10 @@ enum TerminalEnvironment {
 
         env["PWD"] = workingDirectory.path
 
+        // Expose the MCP bridge socket so any tool the agent runs (or
+        // the helper binary itself) can locate the main app.
+        env["MOTEM_MCP_SOCKET"] = MCPConfigInjector.socketURL.path
+
         return env
     }
 

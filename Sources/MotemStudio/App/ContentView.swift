@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var l10n: LocalizationManager
+    @ObservedObject private var preview = GodotPreviewController.shared
     @AppStorage("DefaultAgent") private var defaultAgent: Agent = .claude
 
     @State private var agent: Agent = .claude
@@ -11,18 +12,24 @@ struct ContentView: View {
     @State private var initialized = false
 
     var body: some View {
-        ZStack {
-            ForEach(Agent.allCases) { candidate in
-                if spawned.contains(candidate) {
-                    TerminalHostView(
-                        agent: candidate,
-                        workingDir: workingDir,
-                        title: bindingForTitle(of: candidate)
-                    )
-                    .opacity(candidate == agent ? 1 : 0)
-                    .allowsHitTesting(candidate == agent)
+        VSplitView {
+            GodotPreviewPane()
+                .frame(minHeight: 200, idealHeight: 360)
+
+            ZStack {
+                ForEach(Agent.allCases) { candidate in
+                    if spawned.contains(candidate) {
+                        TerminalHostView(
+                            agent: candidate,
+                            workingDir: workingDir,
+                            title: bindingForTitle(of: candidate)
+                        )
+                        .opacity(candidate == agent ? 1 : 0)
+                        .allowsHitTesting(candidate == agent)
+                    }
                 }
             }
+            .frame(minHeight: 220)
         }
         .navigationTitle(currentTitle)
         .toolbar {

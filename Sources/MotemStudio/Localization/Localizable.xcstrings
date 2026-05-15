@@ -155,6 +155,138 @@
           "stringUnit" : { "state" : "translated", "value" : "新会话" }
         }
       }
+    },
+    "preview.placeholder.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Godot Preview" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "Godot 预览" }
+        }
+      }
+    },
+    "preview.placeholder.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Ask the agent below to generate a Godot 4 project, then have it call godot_preview to launch the embedded engine here." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "在下方终端里请 agent 生成一个 Godot 4 工程，然后调用 godot_preview 工具，将在这里启动内嵌引擎。" }
+        }
+      }
+    },
+    "preview.failed.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Preview Failed" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "预览失败" }
+        }
+      }
+    },
+    "preview.no_swiftgodotkit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "SwiftGodotKit is not linked." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "未链接 SwiftGodotKit。" }
+        }
+      }
+    },
+    "settings.tab.preview" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Preview" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "预览" }
+        }
+      }
+    },
+    "preview.settings.bridge_status" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "MCP Bridge" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "MCP 通讯" }
+        }
+      }
+    },
+    "preview.settings.bridge_running" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Running" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "运行中" }
+        }
+      }
+    },
+    "preview.settings.bridge_stopped" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Stopped" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "已停止" }
+        }
+      }
+    },
+    "preview.settings.socket" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Socket" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "套接字" }
+        }
+      }
+    },
+    "preview.settings.active_dir" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Active Directory" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "活动目录" }
+        }
+      }
+    },
+    "preview.settings.engine_state" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Engine State" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "引擎状态" }
+        }
+      }
+    },
+    "preview.settings.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Motem Studio adds itself to each working directory's .mcp.json so the agent can call godot_preview / godot_reload / godot_stop / godot_status." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "Motem Studio 会在每个工作目录的 .mcp.json 中注册自身，供 agent 调用 godot_preview / godot_reload / godot_stop / godot_status。" }
+        }
+      }
     }
   }
 }

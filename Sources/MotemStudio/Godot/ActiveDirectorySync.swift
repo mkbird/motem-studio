@@ -1,0 +1,307 @@
+import Foundation
+
+/// Manages the single `_active` working directory that Godot's engine is pinned to.
+///
+/// Godot's engine is a process-level singleton: once `GodotApp.start()` runs with
+/// `--path <X>`, the engine refuses to switch source paths. Every AI-generated
+/// project is therefore mirrored into one fixed location and the engine reloads
+/// resources from there.
+enum ActiveDirectorySync {
+
+    enum SyncError: Error, LocalizedError {
+        case sourceMissing(URL)
+        case sourceNotADirectory(URL)
+        case noProjectFile(URL)
+        case rsyncFailed(exitCode: Int32, stderr: String)
+
+        var errorDescription: String? {
+            switch self {
+            case .sourceMissing(let url):
+                return "Source directory does not exist: \(url.path)"
+            case .sourceNotADirectory(let url):
+                return "Source path is not a directory: \(url.path)"
+            case .noProjectFile(let url):
+                return "Source directory is missing project.godot: \(url.path)"
+            case .rsyncFailed(let code, let stderr):
+                return "rsync failed (exit \(code)): \(stderr)"
+            }
+        }
+    }
+
+    /// Absolute URL of the `_active` directory. Created on first access.
+    static let activeURL: URL = {
+        let appSupport = try? FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        let base = appSupport ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
+        let url = base.appendingPathComponent("MotemStudio/_active", isDirectory: true)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }()
+
+    /// Sub-directory under `_active` where user/agent projects live.
+    /// The host scene at `_active/` root never moves; only this folder
+    /// is wiped and rewritten on each `godot_preview`.
+    static var loadedGameURL: URL {
+        activeURL.appendingPathComponent("loaded_game", isDirectory: true)
+    }
+
+    /// Mirror `srcDir` into `_active/loaded_game/`, dropping engine caches
+    /// and VCS metadata. The host scene at `_active/` (project.godot +
+    /// __motem_host__) is left untouched.
+    @discardableResult
+    static func syncProjectToActive(srcDir: URL) throws -> URL {
+        try validate(srcDir)
+
+        let dstDir = loadedGameURL
+        try FileManager.default.createDirectory(at: dstDir, withIntermediateDirectories: true)
+
+        let src = srcDir.path.hasSuffix("/") ? srcDir.path : srcDir.path + "/"
+        let dst = dstDir.path.hasSuffix("/") ? dstDir.path : dstDir.path + "/"
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/rsync")
+        process.arguments = [
+            "-a",
+            "--delete",
+            // Engine-managed caches: let Godot rebuild on its own
+            "--exclude=.godot",
+            // Source-control noise
+            "--exclude=.git",
+            "--exclude=.DS_Store",
+            src,
+            dst,
+        ]
+        let stderrPipe = Pipe()
+        process.standardError = stderrPipe
+        process.standardOutput = Pipe()
+
+        try process.run()
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else {
+            let data = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+            let stderr = String(data: data, encoding: .utf8) ?? ""
+            throw SyncError.rsyncFailed(exitCode: process.terminationStatus, stderr: stderr)
+        }
+
+        // Rebase every `res://...` reference inside the sync'd files so
+        // they resolve relative to the engine root (`_active/`), which
+        // is rooted at the host project — not the user's project. We
+        // skip `project.godot` because the host script parses it
+        // verbatim and adds the prefix on its own.
+        rebaseResPaths(in: dstDir, prefix: "loaded_game")
+
+        return dstDir
+    }
+
+    /// Rewrite every `res://...` occurrence inside text resources under
+    /// `dir` to `res://<prefix>/...`, so a project that was authored at
+    /// the engine root continues to resolve cleanly when nested into
+    /// `_active/<prefix>/`. Already-rebased paths are left alone.
+    static func rebaseResPaths(in dir: URL, prefix: String) {
+        let fm = FileManager.default
+        let extensions: Set<String> = [
+            "tscn", "tres", "gd", "gdshader", "shader", "json", "cfg", "import",
+        ]
+        let pattern: NSRegularExpression
+        do {
+            // (?<!loaded_game/) — don't match if already prefixed.
+            // [A-Za-z_0-9] in the negative lookbehind would be cleaner
+            // but ICU regex doesn't allow variable-length lookbehind on
+            // older Apple platforms, so we use a fixed-length one here.
+            let escaped = NSRegularExpression.escapedPattern(for: prefix)
+            pattern = try NSRegularExpression(pattern: "res://(?!\(escaped)/)")
+        } catch {
+            NSLog("[ActiveDirectorySync] regex compile failed: \(error)")
+            return
+        }
+        let replacement = "res://\(prefix)/"
+
+        guard let enumerator = fm.enumerator(at: dir, includingPropertiesForKeys: nil) else { return }
+        for case let url as URL in enumerator {
+            let ext = url.pathExtension.lowercased()
+            guard extensions.contains(ext) else { continue }
+            guard let content = try? String(contentsOf: url, encoding: .utf8) else { continue }
+            let range = NSRange(content.startIndex..<content.endIndex, in: content)
+            let rewritten = pattern.stringByReplacingMatches(
+                in: content,
+                options: [],
+                range: range,
+                withTemplate: replacement
+            )
+            if rewritten != content {
+                try? rewritten.write(to: url, atomically: true, encoding: .utf8)
+            }
+        }
+    }
+
+    /// True when `_active/project.godot` exists, i.e. the engine has something
+    /// to launch against.
+    static var activeHasProject: Bool {
+        let projectFile = activeURL.appendingPathComponent("project.godot")
+        return FileManager.default.fileExists(atPath: projectFile.path)
+    }
+
+    /// Lay down the persistent host project under `_active`. The host
+    /// scene stays the engine's `current_scene` for the entire app
+    /// lifetime; user projects are loaded as children to avoid the
+    /// libgodot-macOS `cursor_set_shape` / `set_mouse_mode` crashes that
+    /// fire during `_flush_scene_change`.
+    ///
+    /// Writes are idempotent — if the host files already match, this is
+    /// a no-op. We always overwrite to keep the host script in sync
+    /// with whatever the Swift side expects of it.
+    static func ensureStubProject() {
+        let dir = activeURL
+        let hostDir = dir.appendingPathComponent("__motem_host__", isDirectory: true)
+        try? FileManager.default.createDirectory(at: hostDir, withIntermediateDirectories: true)
+
+        let projectGodot = """
+        config_version=5
+
+        [application]
+        config/name=\"MotemStudioHost\"
+        run/main_scene=\"res://__motem_host__/host.tscn\"
+        config/features=PackedStringArray(\"4.4\")
+
+        [rendering]
+        renderer/rendering_method.mobile=\"mobile\"
+        """
+        let hostTscn = """
+        [gd_scene load_steps=2 format=3]
+
+        [ext_resource type=\"Script\" path=\"res://__motem_host__/host.gd\" id=\"1\"]
+
+        [node name=\"Host\" type=\"Node2D\"]
+        script = ExtResource(\"1\")
+        """
+        // Host script — owns one optional child (the AI-generated game).
+        // Polls a token file for changes so we never have to call any
+        // scene-change API from the Swift side. queue_free + instantiate
+        // + add_child avoids `_flush_scene_change`, the function whose
+        // cursor handling crashes on macOS embedded.
+        let hostGd = #"""
+        extends Node2D
+
+        const TOKEN_PATH := "res://__motem_host__/reload_token.txt"
+        const LOADED_DIR := "res://loaded_game"
+
+        var loaded_scene: Node = null
+        var last_token: String = ""
+        var poll_accum: float = 0.0
+
+        func _ready() -> void:
+        	_check_reload()
+
+        func _process(delta: float) -> void:
+        	poll_accum += delta
+        	if poll_accum > 0.25:
+        		poll_accum = 0.0
+        		_check_reload()
+
+        func _draw() -> void:
+        	if loaded_scene == null:
+        		draw_rect(Rect2(0, 0, 4000, 4000), Color(0.05, 0.05, 0.08))
+
+        func _check_reload() -> void:
+        	var token := ""
+        	if FileAccess.file_exists(TOKEN_PATH):
+        		var f := FileAccess.open(TOKEN_PATH, FileAccess.READ)
+        		if f != null:
+        			token = f.get_as_text()
+        			f.close()
+        	if token == last_token:
+        		return
+        	last_token = token
+        	_swap_to_loaded()
+
+        func _swap_to_loaded() -> void:
+        	if loaded_scene != null and is_instance_valid(loaded_scene):
+        		remove_child(loaded_scene)
+        		loaded_scene.queue_free()
+        		loaded_scene = null
+        	var entry := _resolve_entry()
+        	if entry == "":
+        		queue_redraw()
+        		return
+        	var packed := ResourceLoader.load(entry, "PackedScene", ResourceLoader.CACHE_MODE_IGNORE_DEEP)
+        	if packed == null or not (packed is PackedScene):
+        		push_error("[motem-host] failed to load %s" % entry)
+        		return
+        	var inst := (packed as PackedScene).instantiate()
+        	if inst == null:
+        		push_error("[motem-host] failed to instantiate %s" % entry)
+        		return
+        	loaded_scene = inst
+        	add_child(loaded_scene)
+        	queue_redraw()
+        	print("[motem-host] loaded %s" % entry)
+
+        func _resolve_entry() -> String:
+        	# Prefer the loaded project's declared main scene; fall back
+        	# to common conventions if project.godot is missing or odd.
+        	var candidates := [
+        		"res://loaded_game/scenes/main.tscn",
+        		"res://loaded_game/main.tscn",
+        	]
+        	# Try reading run/main_scene out of loaded_game/project.godot.
+        	if FileAccess.file_exists("res://loaded_game/project.godot"):
+        		var f := FileAccess.open("res://loaded_game/project.godot", FileAccess.READ)
+        		if f != null:
+        			var text := f.get_as_text()
+        			f.close()
+        			var lines := text.split("\n", false)
+        			for raw in lines:
+        				var line := raw.strip_edges()
+        				if line.begins_with("run/main_scene="):
+        					var rest := line.substr("run/main_scene=".length()).strip_edges()
+        					rest = rest.trim_prefix("\"").trim_suffix("\"")
+        					if rest.begins_with("res://"):
+        						# rewrite as a path inside loaded_game
+        						var sub := rest.substr("res://".length())
+        						var resolved := "res://loaded_game/%s" % sub
+        						if FileAccess.file_exists(resolved):
+        							return resolved
+        	for c in candidates:
+        		if FileAccess.file_exists(c):
+        			return c
+        	return ""
+        """#
+        try? projectGodot.write(to: dir.appendingPathComponent("project.godot"), atomically: true, encoding: .utf8)
+        try? hostTscn.write(to: hostDir.appendingPathComponent("host.tscn"), atomically: true, encoding: .utf8)
+        try? hostGd.write(to: hostDir.appendingPathComponent("host.gd"), atomically: true, encoding: .utf8)
+
+        // Initial token file (empty = nothing loaded yet)
+        let tokenPath = hostDir.appendingPathComponent("reload_token.txt")
+        if !FileManager.default.fileExists(atPath: tokenPath.path) {
+            try? "".write(to: tokenPath, atomically: true, encoding: .utf8)
+        }
+    }
+
+    /// Write a fresh token value so the host scene's poller detects a
+    /// reload event and swaps its child node.
+    static func touchReloadToken() {
+        let token = "\(Date().timeIntervalSince1970)"
+        let url = activeURL
+            .appendingPathComponent("__motem_host__/reload_token.txt")
+        try? token.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    private static func validate(_ srcDir: URL) throws {
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: srcDir.path, isDirectory: &isDir) else {
+            throw SyncError.sourceMissing(srcDir)
+        }
+        guard isDir.boolValue else {
+            throw SyncError.sourceNotADirectory(srcDir)
+        }
+        let projectFile = srcDir.appendingPathComponent("project.godot")
+        guard FileManager.default.fileExists(atPath: projectFile.path) else {
+            throw SyncError.noProjectFile(srcDir)
+        }
+    }
+}

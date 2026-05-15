@@ -1,0 +1,160 @@
+{
+  "sourceLanguage" : "en",
+  "version" : "1.0",
+  "strings" : {
+    "app.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Motem Studio" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "Motem Studio" }
+        }
+      }
+    },
+    "settings.tab.general" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "General" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "通用" }
+        }
+      }
+    },
+    "settings.language.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Language" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "语言" }
+        }
+      }
+    },
+    "settings.language.system" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Follow System" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "跟随系统" }
+        }
+      }
+    },
+    "settings.language.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Changes apply immediately. Open a new terminal session to update its language." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "切换后立即生效。终端会话需新建后才会切换语言。" }
+        }
+      }
+    },
+    "settings.agent.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Default Agent" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "默认 Agent" }
+        }
+      }
+    },
+    "settings.agent.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Picked at app launch. You can switch agents from the toolbar at any time." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "App 启动时使用。可以随时通过顶部工具栏切换。" }
+        }
+      }
+    },
+    "terminal.notFound.title.claude" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Claude Code not found." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "未找到 Claude Code。" }
+        }
+      }
+    },
+    "terminal.notFound.title.codex" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "OpenAI Codex CLI not found." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "未找到 OpenAI Codex CLI。" }
+        }
+      }
+    },
+    "terminal.notFound.title.gemini" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Gemini CLI not found." }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "未找到 Gemini CLI。" }
+        }
+      }
+    },
+    "terminal.notFound.install.prefix" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Install with:" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "安装命令:" }
+        }
+      }
+    },
+    "project.open" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Open Folder…" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "打开文件夹…" }
+        }
+      }
+    },
+    "project.recent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Recent Projects" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "最近项目" }
+        }
+      }
+    },
+    "tab.new" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "New Session" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "新会话" }
+        }
+      }
+    }
+  }
+}

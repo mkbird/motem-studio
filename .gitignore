@@ -1,0 +1,24 @@
+.DS_Store
+*.xcodeproj/
+*.xcworkspace/
+build/
+DerivedData/
+.swiftpm/
+Package.resolved
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+.build/
+
+# Editor swap/state
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Tooling
+.omc/
+.claude/
+
+# XcodeGen-generated
+Sources/MotemStudio/Resources/Info.plist

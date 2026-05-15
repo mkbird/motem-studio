@@ -1,0 +1,49 @@
+name: MotemStudio
+options:
+  deploymentTarget:
+    macOS: "13.0"
+  bundleIdPrefix: com.motem
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+packages:
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    branch: main
+
+targets:
+  MotemStudio:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/MotemStudio
+        excludes:
+          - "Resources/MotemStudio.entitlements"
+    dependencies:
+      - package: SwiftTerm
+        product: SwiftTerm
+    info:
+      path: Sources/MotemStudio/Resources/Info.plist
+      properties:
+        LSMinimumSystemVersion: "13.0"
+        CFBundleDisplayName: Motem Studio
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        CFBundleLocalizations:
+          - en
+          - zh-Hans
+        CFBundleDevelopmentRegion: en
+        NSHumanReadableCopyright: "© 2026 Motem"
+        NSPrincipalClass: NSApplication
+        LSApplicationCategoryType: public.app-category.developer-tools
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.motem.studio
+        PRODUCT_NAME: MotemStudio
+        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        SWIFT_VERSION: "5.9"
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: Sources/MotemStudio/Resources/MotemStudio.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""

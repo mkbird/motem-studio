@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// Persistence
 /// - `access_token` + `refresh_token` live in the macOS Keychain
-///   (`KeychainHelper`), scoped to this app.
+///   (`TokenStore`), scoped to this app.
 /// - `user.id` and `display_name` are mirrored to `UserDefaults` for a
 ///   fast cold-start guard that doesn't need a Keychain prompt.
 ///
@@ -84,8 +84,8 @@ final class AuthManager: ObservableObject {
     }
 
     func logout() {
-        KeychainHelper.delete(Self.accessTokenKey)
-        KeychainHelper.delete(Self.refreshTokenKey)
+        TokenStore.delete(Self.accessTokenKey)
+        TokenStore.delete(Self.refreshTokenKey)
         UserDefaults.standard.removeObject(forKey: Self.userIdKey)
         UserDefaults.standard.removeObject(forKey: Self.displayNameKey)
         TemplateBundleSync.shared.clearCache()
@@ -104,7 +104,7 @@ final class AuthManager: ObservableObject {
     func handleUnauthorized() {
         guard isLoggedIn else { return }
         Task { @MainActor in
-            if let refresh = KeychainHelper.get(Self.refreshTokenKey),
+            if let refresh = TokenStore.get(Self.refreshTokenKey),
                !refresh.isEmpty,
                await self.tryRefresh(refreshToken: refresh) {
                 return
@@ -117,7 +117,7 @@ final class AuthManager: ObservableObject {
     // MARK: - Cold-start restore
 
     private func loadSavedCredentials() {
-        let access = KeychainHelper.get(Self.accessTokenKey) ?? ""
+        let access = TokenStore.get(Self.accessTokenKey) ?? ""
         let savedUserId = UserDefaults.standard.string(forKey: Self.userIdKey) ?? ""
         let savedDisplay = UserDefaults.standard.string(forKey: Self.displayNameKey) ?? ""
 
@@ -138,7 +138,7 @@ final class AuthManager: ObservableObject {
         }
 
         // Access token gone or expired — fall back to refresh.
-        if let refresh = KeychainHelper.get(Self.refreshTokenKey),
+        if let refresh = TokenStore.get(Self.refreshTokenKey),
            !refresh.isEmpty {
             isBootstrapping = true
             Task { @MainActor in
@@ -151,8 +151,8 @@ final class AuthManager: ObservableObject {
     // MARK: - Internals
 
     private func applyTokens(_ tokens: TokenResponse) async {
-        KeychainHelper.save(tokens.access_token, for: Self.accessTokenKey)
-        KeychainHelper.save(tokens.refresh_token, for: Self.refreshTokenKey)
+        TokenStore.save(tokens.access_token, for: Self.accessTokenKey)
+        TokenStore.save(tokens.refresh_token, for: Self.refreshTokenKey)
         accessToken = tokens.access_token
         _ = await fetchAndStoreUser()
         isLoggedIn = true

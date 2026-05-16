@@ -86,10 +86,9 @@ struct ContentView: View {
                         TerminalHostView(
                             agent: session.agent,
                             workingDir: workingDir,
+                            isActive: session.id == activeID,
                             title: bindingForTitle(of: session.id)
                         )
-                        .opacity(session.id == activeID ? 1 : 0)
-                        .allowsHitTesting(session.id == activeID)
                     }
                 }
             }

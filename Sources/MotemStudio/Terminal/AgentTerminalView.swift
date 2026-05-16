@@ -81,6 +81,11 @@ final class AgentTerminalView: LocalProcessTerminalView {
     /// cursor / line shortcuts into readline / vt100 control bytes so
     /// they work in every CLI's prompt and in vim / less alike.
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // ZStack stacks every session's terminal view; AppKit normally
+        // skips hidden views during key-equivalent dispatch, but guard
+        // here too so a stray broadcast can't paste into a background
+        // tab.
+        if isHidden { return false }
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
         // Option + Backspace → delete word backward.

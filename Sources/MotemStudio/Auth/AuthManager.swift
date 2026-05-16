@@ -28,6 +28,14 @@ final class AuthManager: ObservableObject {
 
     static let shared = AuthManager()
 
+    /// Temporary kill-switch for the login gate. When true, a cold start
+    /// without a Keychain token still drops the user straight into the
+    /// workspace as a synthetic "local" guest. Backend-driven features
+    /// (template sync, library, publish) become no-ops since the token
+    /// is empty — terminals and the Godot preview pane still work.
+    /// Flip this back to `false` before shipping a production build.
+    static let bypassAuthForLocalUse = true
+
     @Published private(set) var isLoggedIn = false
     @Published private(set) var isBootstrapping = false
     @Published private(set) var accessToken: String = ""
@@ -95,6 +103,9 @@ final class AuthManager: ObservableObject {
         isLoggedIn = false
         isBootstrapping = false
         errorMessage = nil
+        if Self.bypassAuthForLocalUse {
+            enterGuestMode()
+        }
     }
 
     /// Called by `APIClient` when the backend rejects a request with
@@ -143,9 +154,27 @@ final class AuthManager: ObservableObject {
             isBootstrapping = true
             Task { @MainActor in
                 _ = await self.tryRefresh(refreshToken: refresh)
+                if !self.isLoggedIn, Self.bypassAuthForLocalUse {
+                    self.enterGuestMode()
+                }
                 self.isBootstrapping = false
             }
+            return
         }
+
+        if Self.bypassAuthForLocalUse {
+            enterGuestMode()
+        }
+    }
+
+    /// Bypass-mode session: no token, no backend identity, but the UI
+    /// gate is open so the user can drive the terminal + Godot pane.
+    /// `triggerPostLoginSync` is skipped because `accessToken` is empty.
+    private func enterGuestMode() {
+        accessToken = ""
+        userId = "local"
+        displayName = "Local"
+        isLoggedIn = true
     }
 
     // MARK: - Internals
@@ -276,6 +305,7 @@ final class AuthManager: ObservableObject {
     }
 
     private func triggerPostLoginSync() {
+        guard !accessToken.isEmpty else { return }
         Task { await TemplateBundleSync.shared.sync() }
     }
 

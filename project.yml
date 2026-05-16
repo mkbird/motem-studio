@@ -28,8 +28,12 @@ targets:
         product: SwiftTerm
       - package: SwiftGodotKit
         product: SwiftGodotKit
+      # SwiftGodot ships as a dynamic library — it has to be embedded
+      # so the .app can resolve @rpath/SwiftGodot.framework once it's
+      # moved out of the DerivedData build folder (DMG, /Applications).
       - package: SwiftGodot
         product: SwiftGodot
+        embed: true
       - target: MotemMCPBridge
         copy:
           destination: resources

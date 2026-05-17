@@ -126,9 +126,14 @@ enum AgentSandbox {
 
     // MARK: - Prompt
 
-    /// The Motem-Studio-owned section. After `TemplateBundleSync`
-    /// pulls from the backend, the upstream `_template_slowpath/
-    /// CLAUDE.md` is appended in a separate fenced block.
+    /// The Motem-Studio-owned section. After `TemplateBundleSync` pulls
+    /// from the backend, the full game-rules section (authoritative for
+    /// both iOS-side and macOS-side Godot generation) is appended below
+    /// inside its own fenced marker block. This Motem section only owns
+    /// macOS-host concerns: MCP tools that proxy to the embedded Godot
+    /// engine, sandbox boundaries, and how to read clipboard/dropped
+    /// images. Anything about Godot architecture, hooks, asset rules,
+    /// or audio catalog lives in the backend section.
     private static let motemPromptSection: String = """
     <!-- managed: motem -->
     <!--
@@ -144,6 +149,17 @@ enum AgentSandbox {
     sandbox directory dedicated to Motem Studio — write project files
     here, not in the user's home directory or unrelated locations.
 
+    ## Game rules
+
+    The full architecture, required hooks, asset structure, coding
+    constraints and audio catalogue are in the **backend-template
+    section appended below**. Treat that as the authoritative spec for
+    every Godot project you author — this Motem section only documents
+    macOS-host conveniences (preview MCP tools, sandbox boundaries,
+    image input). Do NOT contradict the backend rules; do NOT
+    "from-scratch" a `main.gd` — the backend's skeleton-hook
+    architecture is the only supported shape.
+
     ## Available MCP tools
 
     Motem Studio exposes an in-process Godot 4 engine through an MCP
@@ -152,7 +168,7 @@ enum AgentSandbox {
 
     | Tool | When to call |
     |---|---|
-    | `godot_preview(project_dir)` | After generating a Godot project, call this with the absolute path to the directory containing `project.godot`. The user sees the result instantly in the preview pane above the terminal. |
+    | `godot_preview(project_dir)` | After writing a new game's files, call with the absolute path to the directory containing `project.godot`. The user sees it instantly in the preview pane above the terminal. |
     | `godot_reload()` | After editing any `.gd`, `.tscn`, or asset file, call this so the user sees the change without restarting the engine. |
     | `godot_stop()` | When the user is finished or wants the pane cleared. |
     | `godot_status()` | When you want to check whether the engine is loaded and what project is active. |
@@ -161,74 +177,6 @@ enum AgentSandbox {
     project to disk** — the user is expecting visual feedback in real
     time. Do not suggest the user run `godot` from the command line;
     they don't have it installed and they don't need to.
-
-    ## Godot 4 cheat sheet
-
-    A minimal project Motem Studio's preview accepts:
-
-    ```
-    project.godot
-    scenes/
-      main.tscn
-      main.gd
-    ```
-
-    Minimum `project.godot`:
-
-    ```
-    config_version=5
-
-    [application]
-    config/name="MyGame"
-    run/main_scene="res://scenes/main.tscn"
-    config/features=PackedStringArray("4.4")
-
-    [rendering]
-    renderer/rendering_method.mobile="mobile"
-    ```
-
-    Minimum `scenes/main.tscn`:
-
-    ```
-    [gd_scene load_steps=2 format=3]
-
-    [ext_resource type="Script" path="res://scenes/main.gd" id="1"]
-
-    [node name="Main" type="Node2D"]
-    script = ExtResource("1")
-    ```
-
-    Minimum `scenes/main.gd`:
-
-    ```
-    extends Node2D
-
-    func _ready() -> void:
-        pass
-
-    func _draw() -> void:
-        draw_rect(Rect2(0, 0, 4000, 4000), Color(0.1, 0.3, 0.6))
-    ```
-
-    Notes:
-    - The preview engine renders `mobile` method with `metal` driver.
-      Don't override these in `project.godot`.
-    - Avoid GDScript autoloads — the preview wraps your scene as a
-      child of a host scene, so autoloads on the loaded project don't
-      take effect in the same way they would in a normal Godot run.
-    - All paths inside `.tscn` / `.gd` are rewritten automatically when
-      Motem Studio syncs your project into its preview directory, so
-      you should still author them as if your project lives at the
-      engine root (`res://scenes/main.tscn`, not `res://something/
-      scenes/main.tscn`).
-
-    ## Working with the user
-
-    - Match the language the user writes in (Mandarin or English).
-    - For new projects, write all files first, then call
-      `godot_preview` exactly once.
-    - For iterative tweaks, edit files in place, then call
-      `godot_reload`.
 
     ## Image and file attachments
 
@@ -242,11 +190,20 @@ enum AgentSandbox {
     ## Backend template mirror
 
     A mirror of the backend's Godot skeleton lives at `.template/` in
-    this sandbox. Read scripts from there (e.g. `.template/_template/
-    scripts/input_bridge.gd`) rather than reinventing them — they are
-    the same files iOS-side games are generated against. When the
-    mirror is empty, the backend has not been reached yet (run a login
-    flow first).
+    this sandbox. Read scripts from there (e.g.
+    `.template/_template/scripts/input_bridge.gd`) rather than
+    reinventing them — they are the same files iOS-side games are
+    generated against. When the mirror is empty, the backend has not
+    been reached yet (run a login flow first).
+
+    ## Working with the user
+
+    - Match the language the user writes in (Mandarin or English).
+    - For new projects: read the backend rules below, write the game
+      files following the skeleton-hook architecture, then call
+      `godot_preview` exactly once.
+    - For iterative tweaks: edit files in place, then call
+      `godot_reload`.
     <!-- /managed: motem -->
     """
 }

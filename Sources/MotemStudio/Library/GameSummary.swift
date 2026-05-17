@@ -12,6 +12,12 @@ struct GameSummary: Codable, Identifiable, Equatable, Hashable {
     let inputMode: String?
     let kind: String?
     let coverURL: String?
+    let visibility: String?
+    let isOwner: Bool?
+    let likeCount: Int?
+    let favoriteCount: Int?
+    let remixCount: Int?
+    let shareCount: Int?
 
     var id: String { gameId }
 
@@ -24,6 +30,18 @@ struct GameSummary: Codable, Identifiable, Equatable, Hashable {
         case inputMode = "input_mode"
         case kind
         case coverURL = "cover_url"
+        case visibility
+        case isOwner = "is_owner"
+        case likeCount = "like_count"
+        case favoriteCount = "favorite_count"
+        case remixCount = "remix_count"
+        case shareCount = "share_count"
+    }
+
+    /// True when the game is publicly remixable, by anyone. Used by the
+    /// macOS sidebar to keep the list to "mine or remixable".
+    var isPublicRemixable: Bool {
+        visibility == "public_remixable"
     }
 
     /// `title` localised to the current device language (en or zh-Hans).

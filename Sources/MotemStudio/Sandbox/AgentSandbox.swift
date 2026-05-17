@@ -95,8 +95,27 @@ enum AgentSandbox {
     static func applyBackendTemplate(claudeMd: String, etag: String) {
         let trimmed = claudeMd.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        writePromptFiles(backendSection: BackendSection(content: trimmed, etag: etag))
+        cachedBackendSection = BackendSection(content: trimmed, etag: etag)
+        writePromptFiles(backendSection: cachedBackendSection)
     }
+
+    /// Re-render the prompt files using whatever backend slice is
+    /// currently cached. Triggered by `ControlModePreference.set` when
+    /// the user flips the control-mode toggle so the local claude reads
+    /// the new selection on its next turn.
+    static func refreshPromptFiles() {
+        writePromptFiles(backendSection: cachedBackendSection)
+    }
+
+    private static var cachedBackendSection: BackendSection?
+
+    /// Mirror of `GodotPreviewController.currentProjectDir`. The preview
+    /// controller pushes into this on every change and triggers
+    /// `refreshPromptFiles` so the local claude reads the new state on
+    /// its next turn. We mirror instead of querying the controller so
+    /// `AgentSandbox` (a nonisolated enum) doesn't need to reach into
+    /// main-actor state.
+    static var currentPreviewDir: URL?
 
     // MARK: - Prompt rendering
 
@@ -115,6 +134,8 @@ enum AgentSandbox {
 
     private static func renderPrompt(backendSection: BackendSection?) -> String {
         var output = motemPromptSection
+        output += "\n\n" + currentPreviewSection()
+        output += "\n\n" + controlModeSection()
         if let backendSection {
             output += "\n\n<!-- managed: backend-template version=\(backendSection.etag) -->\n"
             output += backendSection.content
@@ -122,6 +143,81 @@ enum AgentSandbox {
             output += "<!-- /managed: backend-template -->\n"
         }
         return output
+    }
+
+    /// What's currently in the Godot preview pane, expressed as routing
+    /// rules for the local claude. Drives the default action: edit the
+    /// previewed game if one is loaded, create a new one if not. Either
+    /// rule can be overridden by an explicit user request ("new game",
+    /// "make a different one").
+    private static func currentPreviewSection() -> String {
+        if let dir = currentPreviewDir {
+            return """
+            <!-- managed: motem-preview-state -->
+            ## Default action: EDIT the currently-previewed game
+
+            A game is currently loaded in the preview pane at:
+
+            ```
+            \(dir.path)
+            ```
+
+            **Unless the user explicitly says "新建 / new game / create a
+            different one / 重新做一个"**, the default action for any
+            gameplay request is to **edit files inside that directory**
+            (Read/Edit `scenes/main.gd`, `scripts/i18n_strings.gd`,
+            `meta.json` etc.) and then call `godot_reload()` so the
+            running preview picks up the change. Do NOT call
+            `godot_preview(<new_dir>)` to swap to a new project unless
+            the user has clearly asked for a brand-new game.
+
+            If the user explicitly asks for a new game, create it in a
+            new sibling directory under this sandbox, then call
+            `godot_preview(<new_dir>)` to switch the preview over.
+            <!-- /managed: motem-preview-state -->
+            """
+        }
+        return """
+        <!-- managed: motem-preview-state -->
+        ## Default action: CREATE a new game
+
+        Nothing is loaded in the preview pane yet. The default action
+        for any gameplay request is to **create a new Godot project**
+        in a new directory under this sandbox, write the game files,
+        and then call `godot_preview(<absolute_path_to_new_dir>)` so
+        the preview pane picks it up.
+        <!-- /managed: motem-preview-state -->
+        """
+    }
+
+    /// Snapshot of the user's current control-mode pick so the local
+    /// claude treats it as the authoritative answer when generating a
+    /// new game. Read directly from `UserDefaults` so this remains a
+    /// nonisolated static (`AgentSandbox` is `enum`, can't hold actor
+    /// state, and `ControlModePreference` is main-actor only).
+    private static func controlModeSection() -> String {
+        let raw = UserDefaults.standard.string(forKey: "Motem.controlMode") ?? "touch"
+        let label: String
+        let detail: String
+        switch raw {
+        case "body_pose":
+            label = "BODY_POSE"
+            detail = "Player drives the game with body / face motion. The host runtime writes `/root/InputBridge.body_lean_x/y`, `face_position`, `hand_gesture`, etc. — use those (or `get_body_target(margin)`) for movement. Do NOT rely on `_handle_gameplay_tap` as the primary control."
+        default:
+            label = "TOUCH"
+            detail = "Player taps the screen. Implement `_handle_gameplay_tap(pos)` (or its inner `_on_tap(pos)` callback) as the primary control. The InputBridge is still pre-bound but the player will not be moving their body."
+        }
+        return """
+        <!-- managed: motem-control-mode -->
+        ## Control mode (user-selected)
+
+        The user has explicitly picked **\(label)** in the Motem Studio toolbar
+        for the game you are about to author. Write `meta.json` with
+        `input_mode: "\(raw)"`, and shape the gameplay accordingly:
+
+        \(detail)
+        <!-- /managed: motem-control-mode -->
+        """
     }
 
     // MARK: - Prompt

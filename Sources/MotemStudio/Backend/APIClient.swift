@@ -49,19 +49,21 @@ final class APIClient {
         return try await performRaw(request).data
     }
 
-    /// Multipart upload with a single binary `file` field. Returns a
-    /// JSON-decoded response.
+    /// Multipart upload with one binary form field. `fieldName` is the
+    /// form-field name the backend expects ("file" for zip uploads,
+    /// "image" for cover uploads). Returns a JSON-decoded response.
     func uploadFile<T: Decodable>(
         _ path: String,
         fileData: Data,
         fileName: String,
         mimeType: String = "application/octet-stream",
+        fieldName: String = "file",
         as type: T.Type = T.self
     ) async throws -> T {
         let boundary = "MotemStudio-\(UUID().uuidString)"
         var body = Data()
         body.append("--\(boundary)\r\n".utf8Data)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".utf8Data)
+        body.append("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".utf8Data)
         body.append("Content-Type: \(mimeType)\r\n\r\n".utf8Data)
         body.append(fileData)
         body.append("\r\n--\(boundary)--\r\n".utf8Data)
@@ -88,6 +90,27 @@ final class APIClient {
         )
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await perform(request)
+    }
+
+    /// JSON PATCH with automatic encode + decode. Used for partial
+    /// updates on games (visibility / title) once the row exists.
+    func patchJSON<Req: Encodable, Resp: Decodable>(
+        _ path: String,
+        body: Req,
+        as type: Resp.Type = Resp.self
+    ) async throws -> Resp {
+        let encoded = try JSONEncoder().encode(body)
+        var request = try await buildRequest(path: path, method: "PATCH", body: encoded)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        return try await perform(request)
+    }
+
+    /// Bodyless DELETE. Backend's `DELETE /api/games/{id}` returns an
+    /// HTTP 200/403/404 status with no JSON payload, so we ignore the
+    /// response data and surface non-2xx as an error.
+    func delete(_ path: String) async throws {
+        let request = try await buildRequest(path: path, method: "DELETE", body: nil)
+        _ = try await performRaw(request)
     }
 
     // MARK: - Plumbing

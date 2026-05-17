@@ -54,6 +54,11 @@ enum GameLoader {
             case .success:
                 NSLog("[GameLoader] preview OK")
                 store.markActive(gameId)
+                // What we just unpacked is byte-equivalent to what the
+                // backend has, so the Publish button should start
+                // disabled. It re-enables only after the user actually
+                // edits the project.
+                PublishController.shared.markSnapshot(dir: target)
             case .failure(let message):
                 NSLog("[GameLoader] preview FAILED: %@", message)
                 throw LoaderError.downloadFailed(NSError(

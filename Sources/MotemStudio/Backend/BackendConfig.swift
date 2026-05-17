@@ -13,7 +13,7 @@ enum BackendConfig {
     /// Keep in sync with `deskrobot-ios/RobotConfig.swift` so a fresh
     /// install of Motem Studio talks to the same dev backend the
     /// iPhone hits.
-    static let defaultHost = "192.168.31.28"
+    static let defaultHost = "172.18.5.244"
     static let defaultPort = 8000
 
     private static let hostKey = "BackendHost"

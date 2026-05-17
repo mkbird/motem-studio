@@ -69,6 +69,8 @@ struct ContentView: View {
     @ViewBuilder
     private var terminalArea: some View {
         VStack(spacing: 0) {
+            ControlModeBar()
+            Divider()
             TerminalTabBar(
                 sessions: sessions,
                 activeID: activeID,

@@ -19,6 +19,7 @@ struct GodotPreviewPane: View {
     @ObservedObject private var controller = GodotPreviewController.shared
     @ObservedObject private var publish = PublishController.shared
     @EnvironmentObject private var l10n: LocalizationManager
+    @State private var showPublishSheet = false
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -46,6 +47,10 @@ struct GodotPreviewPane: View {
             // pump, so it should run for the whole app lifetime once
             // the user has a preview pane on screen.
             MacOSInputAdapter.shared.start()
+            publish.beginWatching(projectDir: controller.currentProjectDir)
+        }
+        .onChange(of: controller.currentProjectDir) { newDir in
+            publish.beginWatching(projectDir: newDir)
         }
     }
 
@@ -147,6 +152,8 @@ struct GodotPreviewPane: View {
             statusChip(icon: "archivebox", text: L10n.string("publish.state.packaging"), tint: .secondary)
         case .uploading:
             statusChip(icon: "arrow.up.circle", text: L10n.string("publish.state.uploading"), tint: .secondary)
+        case .finalizing:
+            statusChip(icon: "arrow.up.circle", text: L10n.string("publish.state.finalizing"), tint: .secondary)
         case .success(_, let message):
             statusChip(icon: "checkmark.circle.fill", text: message, tint: .green)
         case .failed(let reason):
@@ -180,26 +187,31 @@ struct GodotPreviewPane: View {
 
     private var publishButton: some View {
         Button(action: handlePublish) {
-            Label(L10n.string("publish.button"), systemImage: "iphone.gen3")
+            Label(L10n.string("publish.button"), systemImage: "paperplane.fill")
                 .font(.callout.weight(.medium))
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.regular)
         .disabled(!canPublish)
+        .sheet(isPresented: $showPublishSheet) {
+            PublishSheet(isPresented: $showPublishSheet)
+        }
     }
 
     private var canPublish: Bool {
-        guard controller.currentProjectDir != nil else { return false }
+        // Gate on (a) the publish controller not being mid-upload and
+        // (b) the project having content the user hasn't already
+        // pushed. Re-uploading an unchanged project would just churn
+        // the backend and re-notify the iPhone with the same payload.
         switch publish.state {
-        case .packaging, .uploading:
+        case .packaging, .uploading, .finalizing:
             return false
         default:
-            return true
+            return publish.hasPendingChanges
         }
     }
 
     private func handlePublish() {
-        guard let dir = controller.currentProjectDir else { return }
-        Task { await publish.publish(projectDir: dir) }
+        showPublishSheet = true
     }
 }

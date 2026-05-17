@@ -621,8 +621,295 @@
     "publish.button" : {
       "extractionState" : "manual",
       "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Publish" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "发布" } }
+      }
+    },
+    "publish.sheet.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Publish Game" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "发布游戏" } }
+      }
+    },
+    "publish.sheet.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pick where to send the current preview." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择要将当前预览发布到的目标。" } }
+      }
+    },
+    "publish.target.iphone.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Publish to iPhone" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "发布到 iPhone" } }
+      }
+    },
+    "publish.target.iphone.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Uploads the game to the backend so the iPhone signed in to the same account receives it via push." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "上传到后端，已登录同一账号的 iPhone 会通过推送收到这款游戏。" } }
+      }
+    },
+    "publish.target.action.send" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Send" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "发送" } }
+      }
+    },
+    "publish.target.action.retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重试" } }
+      }
+    },
+    "publish.sheet.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成" } }
+      }
+    },
+    "publish.sheet.noProject" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start a Godot preview first, then come back to publish it." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请先启动一次 Godot 预览，再回来发布。" } }
+      }
+    },
+    "publish.field.title.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Game Name" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "游戏名称" } }
+      }
+    },
+    "publish.field.title.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a name" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "输入名称" } }
+      }
+    },
+    "publish.field.cover.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cover" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "封面图" } }
+      }
+    },
+    "publish.field.cover.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional · used as the card in the iPhone library" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可选 · 用作 iPhone 上的卡片封面" } }
+      }
+    },
+    "publish.field.cover.action.pick" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose Image…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择图片…" } }
+      }
+    },
+    "publish.field.cover.action.change" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "更换" } }
+      }
+    },
+    "publish.field.cover.action.remove" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "移除" } }
+      }
+    },
+    "publish.field.visibility.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Visibility" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可见范围" } }
+      }
+    },
+    "publish.visibility.public_remixable.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Public · Remixable" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "公开 · 可二创" } }
+      }
+    },
+    "publish.visibility.public_remixable.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Anyone can view and remix into their own game." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "所有人可查看，并可以二创为自己的游戏。" } }
+      }
+    },
+    "publish.visibility.public_view_only.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Public · View Only" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "公开 · 仅查看" } }
+      }
+    },
+    "publish.visibility.public_view_only.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Anyone can view; remix is disabled." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "所有人可查看，但禁止二创。" } }
+      }
+    },
+    "publish.visibility.private.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Private" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "私有" } }
+      }
+    },
+    "publish.visibility.private.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Only visible to you. Stays on your devices via the backend." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "仅你自己可见，仅通过后端同步到你的设备。" } }
+      }
+    },
+    "controlMode.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Control:" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "控制方式：" } }
+      }
+    },
+    "controlMode.touch.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Touch" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "触摸" } }
+      }
+    },
+    "controlMode.body_pose.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Body / face" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "体感" } }
+      }
+    },
+    "controlMode.touch.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Next game: player taps the screen; iPhone keeps the camera off." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "下一个游戏：玩家点击屏幕，iPhone 不打开摄像头。" } }
+      }
+    },
+    "controlMode.body_pose.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Next game: player drives with body / face; iPhone opens the front camera." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "下一个游戏：玩家通过身体/头部姿势操作，iPhone 打开前置摄像头。" } }
+      }
+    },
+    "publish.action.cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } }
+      }
+    },
+    "publish.action.publish" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Publish" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "发布" } }
+      }
+    },
+    "publish.action.retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重试" } }
+      }
+    },
+    "publish.state.finalizing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Finalizing…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在收尾…" } }
+      }
+    },
+    "library.section.mine" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "My Games" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "我的游戏" } }
+      }
+    },
+    "library.section.remixable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remixable" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可二创" } }
+      }
+    },
+    "library.delete.action" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除" } }
+      }
+    },
+    "library.delete.confirm.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete this game?" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确定删除这款游戏？" } }
+      }
+    },
+    "library.delete.confirm.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "It will be removed from the backend and from every device signed in to this account, including iPhone." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "后端和所有登录此账号的设备（包括 iPhone）都会同步删除。" } }
+      }
+    },
+    "library.delete.confirm.button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除" } }
+      }
+    },
+    "library.delete.cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } }
+      }
+    },
+    "library.delete.error" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete failed: %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除失败:%@" } }
+      }
+    },
+    "input_mode.touch" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Touch" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "触屏" } }
+      }
+    },
+    "input_mode.body_pose" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Body Pose" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "体感" } }
       }
     },
     "publish.state.packaging" : {

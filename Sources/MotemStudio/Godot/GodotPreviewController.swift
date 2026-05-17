@@ -48,7 +48,17 @@ final class GodotPreviewController: ObservableObject {
 
     /// Absolute path most recently surfaced to the engine; nil until
     /// the first preview succeeds.
-    @Published private(set) var currentProjectDir: URL?
+    @Published private(set) var currentProjectDir: URL? {
+        didSet {
+            // Keep the sandbox CLAUDE.md in sync so the local claude
+            // knows whether it should default to editing the current
+            // preview vs. spinning up a new game. AgentSandbox reads
+            // back through its own mirrored cache so this stays a
+            // simple imperative write.
+            AgentSandbox.currentPreviewDir = currentProjectDir
+            AgentSandbox.refreshPromptFiles()
+        }
+    }
 
     private init() {
         // Intentionally empty. Everything below — stub project, engine
@@ -143,6 +153,7 @@ final class GodotPreviewController: ObservableObject {
         if let sceneTree = Engine.getMainLoop() as? SceneTree {
             sceneTree.unloadCurrentScene()
         }
+        currentProjectDir = nil
         state = .idle
         return .success(statusPayload())
         #else

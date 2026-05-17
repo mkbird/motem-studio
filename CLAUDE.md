@@ -146,6 +146,12 @@ iPhone（deskrobot-ios）上自动可玩 —— 复用后端已有的 `_template
 - [x] GameLibrarySidebar + GameLoader
 - [x] PublishController + "Publish to iPhone" 按钮
 - [x] 跨端联调（macOS → backend → iPhone 双向）
+- [x] 游戏规则单一权威：`_template_slowpath/CLAUDE.md` 既是后端 SDK 系统提示词的核心内容，也通过 template-bundle 端点下发给 Motem 沙箱（详见 `docs/unified-game-rules.md`）
+
+### 游戏规则的两段所有权
+
+- `_template_slowpath/CLAUDE.md`（后端）= **唯一权威**。Skeleton-hook 架构、required/optional hooks、Runtime（1194×834 + 安全区）、Input bridge reference、Asset structure、Coding constraints、`{audio_section}` 动态注入的音效 catalog 全部在这里。template-bundle 端点把渲染后的内容打进 tar.gz；Motem 启动后 `TemplateBundleSync` 拉下来填到 sandbox CLAUDE.md 的 `<!-- managed: backend-template -->` 段。
+- `AgentSandbox.motemPromptSection`（Motem app 内）= **macOS 宿主特有**：4 个 godot_preview MCP 工具、sandbox 边界、图片粘贴 `.pastes/`、template 镜像路径、working-with-user 简版。**不重复游戏规则**；任何与后端段冲突的提示都属于 bug。
 
 ### V2 端到端契约速查
 

@@ -7,12 +7,17 @@ struct MotemStudioApp: App {
     @StateObject private var godot = GodotPreviewController.shared
 
     init() {
-        // Intentionally empty. Sandbox layout and the MCP bridge are
-        // both deferred to the first agent terminal session — see
-        // `AgentTerminalView.start()`. Doing them eagerly here triggers
-        // a wave of TCC prompts (firewall, Documents / Downloads /
-        // Music) on first launch before the user has a chance to opt
-        // into anything.
+        // Sandbox layout and the MCP bridge are both deferred to the
+        // first agent terminal session — see `AgentTerminalView.start()`.
+        // Doing them eagerly here triggers a wave of TCC prompts
+        // (firewall, Documents / Downloads / Music) on first launch
+        // before the user has a chance to opt into anything.
+        //
+        // The arrow-key monitor is wired up here, however: the user
+        // expects keyboard navigation to work from the moment the
+        // library appears, and the install is free until the first key
+        // press lands.
+        ArrowKeyMonitor.shared.ensureInstalled()
     }
 
     var body: some Scene {

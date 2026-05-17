@@ -36,5 +36,20 @@ final class ControlModePreference: ObservableObject {
         // keep writing `input_mode` based on the previous user choice
         // (or whatever it inferred from the conversation).
         AgentSandbox.refreshPromptFiles()
+        syncCamera()
+    }
+
+    /// Bring `MacFaceDetector` in line with the current pick + whether
+    /// a game is actually loaded in the preview pane. `body_pose` +
+    /// loaded game → open the camera; anything else → release it. Safe
+    /// to call from anywhere on MainActor — the detector is idempotent.
+    func syncCamera() {
+        let wantsCamera = (inputMode == .bodyPose)
+            && (GodotPreviewController.shared.currentProjectDir != nil)
+        if wantsCamera {
+            MacFaceDetector.shared.start()
+        } else {
+            MacFaceDetector.shared.stop()
+        }
     }
 }

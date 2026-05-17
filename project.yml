@@ -51,6 +51,7 @@ targets:
         NSHumanReadableCopyright: "© 2026 Motem"
         NSPrincipalClass: NSApplication
         LSApplicationCategoryType: public.app-category.developer-tools
+        NSCameraUsageDescription: Motem Studio uses the front camera to drive body-pose / face-tracking gameplay in the preview pane, mirroring how the same game is controlled on iPhone. The camera only turns on while you are previewing a body-pose game.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.motem.studio

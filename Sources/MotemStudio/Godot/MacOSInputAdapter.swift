@@ -234,14 +234,23 @@ final class MacOSInputAdapter: ObservableObject {
                     return // No InputBridge in the current scene tree.
                 }
 
-                bridge.set(property: "body_lean_x", value: Variant(leanX))
-                bridge.set(property: "body_lean_y", value: Variant(leanY))
+                // When the live front-camera tracker is running, it
+                // owns the face/body fields — clobbering them from
+                // the keyboard would flicker the player position
+                // between camera tracking and last keystroke at 30 Hz.
+                // We still drive the gesture + hand_position pair
+                // because the camera path doesn't compute those.
+                let cameraOwnsFace = MacFaceDetector.shared.isActive
+                if !cameraOwnsFace {
+                    bridge.set(property: "body_lean_x", value: Variant(leanX))
+                    bridge.set(property: "body_lean_y", value: Variant(leanY))
+                    bridge.set(property: "body_detected", value: Variant(true))
+                    bridge.set(property: "face_position", value: Variant(Vector2(x: mouseX, y: mouseY)))
+                    bridge.set(property: "face_detected", value: Variant(true))
+                }
                 bridge.set(property: "is_reaching_out", value: Variant(isReachingOut))
                 bridge.set(property: "is_ducking", value: Variant(isDucking))
                 bridge.set(property: "is_hands_up", value: Variant(isHandsUp))
-                bridge.set(property: "body_detected", value: Variant(true))
-                bridge.set(property: "face_position", value: Variant(Vector2(x: mouseX, y: mouseY)))
-                bridge.set(property: "face_detected", value: Variant(true))
                 bridge.set(property: "hand_gesture", value: Variant(gesture))
                 bridge.set(property: "hand_position", value: Variant(Vector2(x: mouseX, y: mouseY)))
             }
@@ -254,7 +263,7 @@ final class MacOSInputAdapter: ObservableObject {
     /// registers the host's `input_bridge.gd` as an engine autoload so
     /// it stays valid across host child swaps. Any AI-generated game
     /// that targets the same contract reads the same node.
-    private static func locateInputBridge() -> SwiftGodot.Node? {
+    static func locateInputBridge() -> SwiftGodot.Node? {
         guard let sceneTree = Engine.getMainLoop() as? SceneTree,
               let root = sceneTree.root else { return nil }
         return root.getNodeOrNull(path: "InputBridge")

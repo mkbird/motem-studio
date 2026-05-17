@@ -57,6 +57,8 @@ final class GodotPreviewController: ObservableObject {
             // simple imperative write.
             AgentSandbox.currentPreviewDir = currentProjectDir
             AgentSandbox.refreshPromptFiles()
+            MacFaceDetector.shared.invalidateBridgeCache()
+            ControlModePreference.shared.syncCamera()
         }
     }
 

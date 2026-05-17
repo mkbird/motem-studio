@@ -14,6 +14,7 @@ struct GameLibrarySidebar: View {
 
     @State private var pendingDelete: GameSummary?
     @State private var deleteInFlight = false
+    @State private var hovered: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -35,6 +36,8 @@ struct GameLibrarySidebar: View {
         }
         .frame(minWidth: 220, idealWidth: 260)
         .background(Color(NSColor.windowBackgroundColor))
+        .onHover { hovered = $0 }
+        .background(arrowShortcuts)
         .task {
             await store.refresh()
         }
@@ -68,6 +71,78 @@ struct GameLibrarySidebar: View {
         pendingDelete = nil
     }
 
+    /// SwiftUI command-level shortcuts that fire only while the mouse
+    /// is over the sidebar. Mounted as a hidden background view so
+    /// AppKit's keyDown dispatch never reaches SwiftTerm — SwiftUI
+    /// resolves the shortcut at the window-command layer first. When
+    /// the user moves off the sidebar, the buttons disappear from the
+    /// view tree, the shortcuts unregister, and arrow keys go back to
+    /// feeding the terminal normally.
+    @ViewBuilder
+    private var arrowShortcuts: some View {
+        if hovered {
+            VStack(spacing: 0) {
+                Button("") { navigate(by: -1) }
+                    .keyboardShortcut(.upArrow, modifiers: [])
+                Button("") { navigate(by: 1) }
+                    .keyboardShortcut(.downArrow, modifiers: [])
+            }
+            .opacity(0)
+            .frame(width: 0, height: 0)
+            .accessibilityHidden(true)
+        }
+    }
+
+    // MARK: - Arrow-key navigation
+    //
+    // SwiftTerm's `LocalProcessTerminalView` claims first-responder
+    // status the moment it appears, so any in-pane SwiftUI `.focusable()`
+    // / `.onKeyPress` modifier is starved of key events. We install a
+    // window-local NSEvent monitor that intercepts ↑/↓ at the AppKit
+    // layer, checks whether the current first responder is the terminal
+    // (in which case the user is typing into the agent CLI and we must
+    // let it through), and otherwise routes the event to library
+    // navigation.
+
+    /// Flattened list of rows in the order they appear on screen.
+    /// Collapsed sections are skipped so the arrow keys never jump to
+    /// hidden rows.
+    private var flattenedGames: [GameSummary] {
+        var list: [GameSummary] = []
+        if !mineCollapsed { list.append(contentsOf: store.myGames) }
+        if !remixableCollapsed { list.append(contentsOf: store.remixableGames) }
+        return list
+    }
+
+    private func navigate(by step: Int) {
+        let games = flattenedGames
+        guard !games.isEmpty else { return }
+        let currentIdx = games.firstIndex { $0.gameId == store.activeGameId }
+        let target: GameSummary
+        if let i = currentIdx {
+            let next = max(0, min(games.count - 1, i + step))
+            if next == i { return }
+            target = games[next]
+        } else {
+            // No active selection yet — start from the top or bottom
+            // depending on which direction the user pressed.
+            target = step > 0 ? games[0] : games[games.count - 1]
+        }
+        loadGame(target)
+    }
+
+    private func loadGame(_ game: GameSummary) {
+        guard store.loadingGameId == nil else { return }
+        Task {
+            do {
+                try await GameLoader.load(gameId: game.gameId)
+            } catch {
+                NSLog("[Sidebar] load error: %@", String(describing: error))
+                GameLibraryStore.shared.setError(error.localizedDescription)
+            }
+        }
+    }
+
     private func canDelete(_ game: GameSummary) -> Bool {
         // Match iOS: only the author can delete, and never builtin
         // games. Backend enforces the same — these checks just hide
@@ -94,6 +169,19 @@ struct GameLibrarySidebar: View {
         )
     }
 
+    /// Icon-only variant of the input mode badge — used in the library
+    /// row where space is tight. The localised label still backs the
+    /// accessibility hint so VoiceOver users still hear "Body Pose".
+    @ViewBuilder
+    private func inputModeIcon(_ mode: String) -> some View {
+        let (symbol, label) = inputModeDisplay(mode)
+        Image(systemName: symbol)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(.secondary)
+            .help(label)
+            .accessibilityLabel(label)
+    }
+
     /// Friendly icon + localised label for the `meta.json` `input_mode`
     /// string. Unknown values fall through to the raw mode name so a
     /// future backend addition still renders something.
@@ -105,11 +193,11 @@ struct GameLibrarySidebar: View {
         }
     }
 
-    /// Like / favourite / remix / share counts, right-aligned. Zero
-    /// values are hidden so a freshly-published game stays uncluttered.
+    /// Like / favourite / remix / share counts, inline with the title.
+    /// Zero values are hidden so a freshly-published game stays uncluttered.
     @ViewBuilder
     private func countStrip(for game: GameSummary) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             countItem(icon: "heart.fill",            count: game.likeCount,     tint: .pink)
             countItem(icon: "star.fill",             count: game.favoriteCount, tint: .yellow)
             countItem(icon: "arrow.triangle.branch", count: game.remixCount,    tint: .accentColor)
@@ -181,7 +269,7 @@ struct GameLibrarySidebar: View {
 
     private var gamesList: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 4, pinnedViews: [.sectionHeaders]) {
+            LazyVStack(alignment: .leading, spacing: 1, pinnedViews: [.sectionHeaders]) {
                 if !store.myGames.isEmpty {
                     Section(header: sectionHeader(
                         "library.section.mine",
@@ -247,33 +335,29 @@ struct GameLibrarySidebar: View {
     private func row(for game: GameSummary) -> some View {
         Button(action: {
             NSLog("[Sidebar] click game=%@", game.gameId)
-            Task {
-                do {
-                    try await GameLoader.load(gameId: game.gameId)
-                } catch {
-                    NSLog("[Sidebar] load error: %@", String(describing: error))
-                    GameLibraryStore.shared.setError(error.localizedDescription)
-                }
-            }
+            loadGame(game)
         }) {
             HStack(spacing: 10) {
                 Text(game.icon ?? "🎮")
                     .font(.system(size: 26))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 36, height: 36)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(game.displayTitle)
-                        .font(.callout.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    HStack(spacing: 6) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        Text(game.displayTitle)
+                            .font(.callout.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                         if let mode = game.inputMode, !mode.isEmpty {
-                            inputModeBadge(mode)
+                            inputModeIcon(mode)
                         }
-                        Spacer(minLength: 0)
                         countStrip(for: game)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
                 }
+                .scrollClipDisabled()
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Spacer(minLength: 0)
 
@@ -288,7 +372,7 @@ struct GameLibrarySidebar: View {
                 }
             }
             .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.vertical, 3)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
             .background(

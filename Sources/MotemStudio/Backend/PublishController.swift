@@ -238,6 +238,15 @@ final class PublishController: ObservableObject {
         } else {
             successCopy = L10n.string("publish.success") + "  (" + trailingWarnings.joined(separator: "; ") + ")"
         }
+        // Re-sync src/ → _active/ so the embedded preview reflects
+        // exactly what we just uploaded. Without this the user can sit
+        // looking at a "pre-edit" preview while iPhone has already
+        // pulled the new build — `writeMeta` mutated `src/meta.json`
+        // between the last `godot_reload` and the publish, so the
+        // local engine's `_active/` copy is stale by at least the
+        // meta diff. Reload uses the same path the agent's
+        // `godot_reload` MCP tool does.
+        _ = await GodotPreviewController.shared.reload()
         state = .success(gameId: gameId, message: successCopy)
         // Lock in the fingerprint AFTER all our writes (meta.json,
         // cover upload may rewrite local cover.png in future), so the

@@ -365,10 +365,6 @@ struct GameLibrarySidebar: View {
                     ProgressView()
                         .controlSize(.small)
                         .scaleEffect(0.7)
-                } else if store.activeGameId == game.gameId {
-                    Image(systemName: "play.fill")
-                        .font(.caption)
-                        .foregroundStyle(.tint)
                 }
             }
             .padding(.horizontal, 8)

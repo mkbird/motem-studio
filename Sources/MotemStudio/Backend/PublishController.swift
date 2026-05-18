@@ -266,6 +266,22 @@ final class PublishController: ObservableObject {
            let parsed = try? JSONSerialization.jsonObject(with: existing) as? [String: Any] {
             payload = parsed
         }
+        // Carry the canonical game_id forward so the backend updates
+        // this row in place rather than minting a fresh `mac_*` on
+        // every re-publish. `GameLoader` stamps `game_id` into meta
+        // on download; this fallback rescues legacy library entries
+        // whose local meta predates that fix — the directory name is
+        // the game_id by construction (sandbox/library/<id>/).
+        if (payload["game_id"] as? String)?.isEmpty ?? true {
+            let libraryRoot = AgentSandbox.directory
+                .appendingPathComponent("library", isDirectory: true)
+                .standardizedFileURL.path
+            let parentPath = projectDir.deletingLastPathComponent()
+                .standardizedFileURL.path
+            if parentPath == libraryRoot {
+                payload["game_id"] = projectDir.lastPathComponent
+            }
+        }
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let effectiveTitle = trimmedTitle.isEmpty ? projectDir.lastPathComponent : trimmedTitle
         payload["title"] = effectiveTitle

@@ -116,15 +116,46 @@ enum GameLoader {
         // game files themselves (no wrapping directory). Verify the
         // shape so a broken upload surfaces instead of silently
         // showing an empty preview.
-        if !fm.fileExists(atPath: gameDir.appendingPathComponent("project.godot").path) {
+        let resolvedDir: URL
+        if fm.fileExists(atPath: gameDir.appendingPathComponent("project.godot").path) {
+            resolvedDir = gameDir
+        } else {
             // If a single subdirectory wraps the project, descend.
             let children = (try? fm.contentsOfDirectory(at: gameDir, includingPropertiesForKeys: nil)) ?? []
             if children.count == 1, children[0].hasDirectoryPath,
                fm.fileExists(atPath: children[0].appendingPathComponent("project.godot").path) {
-                return children[0]
+                resolvedDir = children[0]
+            } else {
+                throw LoaderError.missingProject
             }
-            throw LoaderError.missingProject
         }
-        return gameDir
+
+        // Stamp the canonical game_id into the local meta.json so a
+        // later re-publish from Motem Studio updates this same row on
+        // the backend instead of creating a brand-new `mac_*` game.
+        // The backend's zip does NOT carry `game_id` in meta.json, but
+        // the directory name we just unpacked into is authoritative
+        // (see `gameDirectory(for:)`).
+        injectGameId(into: resolvedDir, gameId: gameId)
+        return resolvedDir
+    }
+
+    /// Idempotent: read meta.json, set `game_id` if missing or stale,
+    /// write back only if changed. No-op when meta.json is missing or
+    /// unparseable — `PublishController.writeMeta` has a sibling
+    /// fallback that derives the id from the project directory name.
+    private static func injectGameId(into projectDir: URL, gameId: String) {
+        let metaURL = projectDir.appendingPathComponent("meta.json")
+        guard let data = try? Data(contentsOf: metaURL),
+              var dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return }
+        if (dict["game_id"] as? String) == gameId { return }
+        dict["game_id"] = gameId
+        if let out = try? JSONSerialization.data(
+            withJSONObject: dict,
+            options: [.prettyPrinted, .sortedKeys]
+        ) {
+            try? out.write(to: metaURL, options: .atomic)
+        }
     }
 }

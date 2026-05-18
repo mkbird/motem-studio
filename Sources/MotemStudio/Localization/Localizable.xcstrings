@@ -354,6 +354,17 @@
         }
       }
     },
+    "preview.camera_warmup" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Starting camera…" }
+        },
+        "zh-Hans" : {
+          "stringUnit" : { "state" : "translated", "value" : "正在启动相机…" }
+        }
+      }
+    },
     "preview.failed.title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -910,6 +921,69 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Body Pose" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "体感" } }
+      }
+    },
+    "pane.action.stop" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Stop" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "停止" } }
+      }
+    },
+    "pane.action.screenshot" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Screenshot" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "截图" } }
+      }
+    },
+    "pane.action.pause" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pause" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂停" } }
+      }
+    },
+    "pane.action.resume" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Resume" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "继续" } }
+      }
+    },
+    "pause.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "PAUSED" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已暂停" } }
+      }
+    },
+    "pause.action.continue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Continue" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "继续" } }
+      }
+    },
+    "pause.action.rerun" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rerun" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重新运行" } }
+      }
+    },
+    "screenshot.saving" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capturing…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在截图…" } }
+      }
+    },
+    "screenshot.saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved to Downloads" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已保存到下载" } }
       }
     },
     "publish.state.packaging" : {

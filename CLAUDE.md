@@ -112,6 +112,9 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 - **切语言后已开会话仍是旧语言**：PTY 是 fork 时拷贝的 env，预期行为。
 - **App 关闭后 claude 进程残留**：未来要在 `applicationWillTerminate` 遍历所有 terminal view 发 SIGHUP。当前未实现，遇到再补。
 - **删除源文件时**：用 `/bin/rm`，不要用 shell 的 `rm`（被 alias 成 mv-to-trash，触发沙盒）。删完必须重跑 `xcodegen generate` 同步 xcodeproj。
+- **SwiftUI view body 不能直接 `@ObservedObject` `MacFaceDetector.shared`**：会在 app launch 阶段触发单例 init 实例化 `AVCaptureSession`，比 Godot embedded Metal init 还早，二者撞导致 `Main::setup2()` SIGABRT。订阅必须延后到 `controller.state == .running` 之后通过 Combine `.sink` 安装到本地 `@State`。同样的原因，`AVCaptureSession` 在 `MacFaceDetector` 内必须用 `lazy var`，不能 stored property eager 分配。
+- **`AVCaptureDevice.requestAccess` 是异步的**：`MacFaceDetector.start()` 在 callback 回到 main 之前 `isActive` 仍为 false，多次 syncCamera 触发会跑多个 `bootSession()` 并发 → AVCaptureSession 抛 NSException 出 `commitConfiguration` / `startRunning` → SIGABRT。必须用 `bootInFlight` 闸门 + main-thread callback 里二次校验 `!isActive` 双重防御。
+- **场景切换（rerun / 切库游戏）必须主动清 `bridge.gameplay_active`**：autoload bridge 跨场景持久，上一局 `_enter_playing` 留下的 `true` 会让 `MacFaceDetector.reconcileWithGameState` 下一拍误读 → 摄像头在新游戏 START 屏就亮起。`GodotPreviewController.preview / rerun` 在 `setPaused(false)` 之前同步走 `runOnGodotThread`（macOS 上是 sync）写 false；host.gd 的 `_swap_to_loaded` 也再清一次兜底。
 
 ## V1 进度（参考 `plan.md`）
 
@@ -140,6 +143,7 @@ iPhone（deskrobot-ios）上自动可玩 —— 复用后端已有的 `_template
 进度：
 
 - [x] MacOSInputAdapter（键鼠/触控板 → `/root/InputBridge` 9 属性）
+- [x] MacFaceDetector（AVFoundation + Vision → 前置摄像头 face/body 写 `/root/InputBridge`，仅 body-pose 游戏 PLAYING 时启动）
 - [x] 后端 `GET /api/games/template-bundle` + `POST /api/games`
 - [x] AuthManager + APIClient + LoginView
 - [x] TemplateBundleSync（启动后从后端拉模板到 sandbox）
@@ -157,9 +161,10 @@ iPhone（deskrobot-ios）上自动可玩 —— 复用后端已有的 `_template
 
 | 概念 | 路径 / API |
 |---|---|
-| 设计分辨率 | 1194×834（与 iOS 一致；project.godot 配 `stretch_mode=canvas_items` + `aspect=keep`）|
-| 输入契约 | `/root/InputBridge` 9 属性（autoload，host 在 `_active/__motem_host__/input_bridge.gd`）|
+| 设计分辨率 | 1194×834（与 iOS 一致；host `project.godot` 配 `stretch_mode=canvas_items` + `aspect=expand`，让 1194×834 世界横向扩展填满 19.5:9 预览窗格而不 letterbox）|
+| 输入契约 | `/root/InputBridge` 10 属性（autoload，host 在 `_active/__motem_host__/input_bridge.gd`）。新增 `gameplay_active: bool` —— 骨架的 `_enter_playing` 写 true、`_enter_game_over` 写 false，传感器宿主（iPhone FaceDetector / macOS MacFaceDetector）轮询它来决定是否给摄像头供电 |
 | macOS 键鼠映射 | `MacOSInputAdapter` 30Hz 泵：A/D=body_lean_x, W/S=body_lean_y, shift=is_ducking, 空格=is_hands_up, 鼠标=face_position |
+| macOS 摄像头生命周期 | `MacFaceDetector` 250ms 轮询 `bridge.gameplay_active` —— true 且非 pause 时开 AVCaptureSession + Vision face detect，false 时立即断电；START 屏 / GAME OVER / 暂停 / touch 模式 / 无游戏加载 全部关。`bootInFlight` 闸门 + `state == .running` 守卫防止 AVFoundation 在 Godot Metal init 之前被触摸 |
 | 引擎工程根 | `~/Library/Application Support/MotemStudio/_active/`（host scene 常驻；loaded_game 子目录通过 token + add_child 切换）|
 | 资源路径重写 | rsync 后所有 `res://` 自动加 `loaded_game/` 前缀，`.godot/imported` 缓存随 zip 进 _active |
 | 模板同步 | `GET /api/games/template-bundle`（tar.gz + ETag/If-None-Match），登录后自动；解到 `sandbox/.template/`，autoload 脚本拷到 host |

@@ -174,6 +174,14 @@ enum ActiveDirectorySync {
         // available so `MacOSInputAdapter` can pump the 9 properties
         // straight into a stable node, regardless of which AI game is
         // currently loaded under the host.
+        // Register ALL FOUR autoloads up front. AI-generated games
+        // routinely reference `AudioManager`, `GameManager`, `I18n`
+        // from their main scripts; if any of those symbols aren't
+        // declared at parse time, the game's main.gd refuses to load
+        // and the user sees a white pane. `TemplateBundleSync` only
+        // ships the rich autoload implementations after the user
+        // signs in, so we have to register the names — backed by stub
+        // scripts — from the very first boot.
         let projectGodot = """
         config_version=5
 
@@ -186,12 +194,15 @@ enum ActiveDirectorySync {
 
         [autoload]
         InputBridge=\"*res://__motem_host__/input_bridge.gd\"
+        GameManager=\"*res://__motem_host__/game_manager.gd\"
+        I18n=\"*res://__motem_host__/i18n.gd\"
+        AudioManager=\"*res://__motem_host__/audio_manager.gd\"
 
         [display]
         window/size/viewport_width=1194
         window/size/viewport_height=834
         window/stretch/mode=\"canvas_items\"
-        window/stretch/aspect=\"keep\"
+        window/stretch/aspect=\"expand\"
 
         [input_devices]
         pointing/emulate_touch_from_mouse=true
@@ -248,7 +259,23 @@ enum ActiveDirectorySync {
         	_swap_to_loaded()
 
         func _swap_to_loaded() -> void:
+        	# Reset the cross-platform input contract for the incoming
+        	# scene so the previous game's leftover gameplay_active flag
+        	# doesn't make the macOS host re-arm the camera before the
+        	# player has tapped the new game's START screen. The bridge
+        	# is an autoload and persists across scene swaps, so without
+        	# this reset the new game would inherit `gameplay_active=true`
+        	# left over from the previous _enter_playing().
+        	var bridge := get_node_or_null("/root/InputBridge")
+        	if bridge != null:
+        		bridge.gameplay_active = false
         	if loaded_scene != null and is_instance_valid(loaded_scene):
+        		# Force-reparse every script attached to the previous
+        		# scene tree. Without this, Godot's ScriptServer keeps
+        		# the old parsed bytecode under res://loaded_game/...
+        		# paths and the next instantiate() runs the previous
+        		# game's logic — second-game-onwards renders white.
+        		_reload_scripts_in_tree(loaded_scene)
         		remove_child(loaded_scene)
         		loaded_scene.queue_free()
         		loaded_scene = null
@@ -268,6 +295,20 @@ enum ActiveDirectorySync {
         	add_child(loaded_scene)
         	queue_redraw()
         	print("[motem-host] loaded %s" % entry)
+
+        func _reload_scripts_in_tree(root: Node) -> void:
+        	# Typed Array[Node] + explicit casts keep the file parseable
+        	# under `gdscript/warnings/treat_warnings_as_errors=true`,
+        	# which the host project enables to catch AI-generated game
+        	# code that drifts from typed-GDScript style.
+        	var stack: Array[Node] = [root]
+        	while not stack.is_empty():
+        		var node: Node = stack.pop_back()
+        		var s: Script = node.get_script() as Script
+        		if s != null:
+        			s.reload(false)
+        		for child: Node in node.get_children():
+        			stack.append(child)
 
         func _resolve_entry() -> String:
         	# Prefer the loaded project's declared main scene; fall back
@@ -321,18 +362,53 @@ enum ActiveDirectorySync {
         var hand_gesture: String = "none"
         var hand_position: Vector2 = Vector2(0.5, 0.5)
         """
-        // project.godot and input_bridge.gd are seeded only when they
-        // don't already exist. `TemplateBundleSync.installHostAutoloads`
-        // writes more capable versions of both (4 autoloads + the
-        // upstream input_bridge.gd that listens to host messages), and
-        // we must not clobber its work the next time the engine boots.
+        // project.godot is overwritten unconditionally — the four
+        // autoload entries must be registered every launch, regardless
+        // of whether a previous (one-autoload) version is on disk.
+        // input_bridge.gd and the autoload stubs are seeded only when
+        // missing; `TemplateBundleSync.installHostAutoloads` later
+        // upgrades the same files in place with the upstream
+        // implementations and we must not clobber its work.
         let projectGodotURL = dir.appendingPathComponent("project.godot")
-        if !FileManager.default.fileExists(atPath: projectGodotURL.path) {
-            try? projectGodot.write(to: projectGodotURL, atomically: true, encoding: .utf8)
-        }
+        try? projectGodot.write(to: projectGodotURL, atomically: true, encoding: .utf8)
         let inputBridgeURL = hostDir.appendingPathComponent("input_bridge.gd")
         if !FileManager.default.fileExists(atPath: inputBridgeURL.path) {
             try? inputBridgeGd.write(to: inputBridgeURL, atomically: true, encoding: .utf8)
+        }
+        let autoloadStubs: [(filename: String, source: String)] = [
+            ("audio_manager.gd", #"""
+            extends Node
+            # Stub: replaced by TemplateBundleSync.installHostAutoloads.
+            func play(_name: String, _params: Variant = null) -> void: pass
+            func stop(_name: String = "") -> void: pass
+            func set_muted(_muted: bool) -> void: pass
+            """#),
+            ("game_manager.gd", #"""
+            extends Node
+            # Stub: replaced by TemplateBundleSync.installHostAutoloads.
+            signal game_started
+            signal game_over
+            func emit_started() -> void: game_started.emit()
+            func emit_over() -> void: game_over.emit()
+            """#),
+            ("i18n.gd", #"""
+            extends Node
+            # Stub: replaced by TemplateBundleSync.installHostAutoloads.
+            var current_lang: String = "en"
+            func translate(key: String, _params: Dictionary = {}) -> String: return key
+            func set_lang(lang: String) -> void: current_lang = lang
+            """#),
+            ("i18n_strings.gd", #"""
+            extends Node
+            # Stub: replaced by TemplateBundleSync.installHostAutoloads.
+            const STRINGS: Dictionary = {}
+            """#),
+        ]
+        for stub in autoloadStubs {
+            let url = hostDir.appendingPathComponent(stub.filename)
+            if !FileManager.default.fileExists(atPath: url.path) {
+                try? stub.source.write(to: url, atomically: true, encoding: .utf8)
+            }
         }
         try? hostTscn.write(to: hostDir.appendingPathComponent("host.tscn"), atomically: true, encoding: .utf8)
         try? hostGd.write(to: hostDir.appendingPathComponent("host.gd"), atomically: true, encoding: .utf8)
@@ -408,7 +484,7 @@ enum ActiveDirectorySync {
         window/size/viewport_width=1194
         window/size/viewport_height=834
         window/stretch/mode=\"canvas_items\"
-        window/stretch/aspect=\"keep\"
+        window/stretch/aspect=\"expand\"
 
         [input_devices]
         pointing/emulate_touch_from_mouse=true

@@ -40,16 +40,30 @@ final class ControlModePreference: ObservableObject {
     }
 
     /// Bring `MacFaceDetector` in line with the current pick + whether
-    /// a game is actually loaded in the preview pane. `body_pose` +
-    /// loaded game → open the camera; anything else → release it. Safe
-    /// to call from anywhere on MainActor — the detector is idempotent.
+    /// a body-pose game is currently loaded and not paused. The camera
+    /// pre-warms at game load (rather than waiting for the player to
+    /// tap "start") so the AVCaptureSession's ~200-300 ms boot overlaps
+    /// with reading the START screen — by tap time, `face_position` is
+    /// already flowing into `/root/InputBridge` and there's no
+    /// perceived input gap. Pause and game-unload still release it.
     func syncCamera() {
-        let wantsCamera = (inputMode == .bodyPose)
-            && (GodotPreviewController.shared.currentProjectDir != nil)
+        let controller = GodotPreviewController.shared
+        // Starting AVCaptureSession DURING Godot's `Main::setup2()` races
+        // with the embedded display server / Metal init and SIGABRTs the
+        // process. Only pre-warm once the engine is fully booted; the
+        // controller calls `syncCamera()` again the moment it transitions
+        // to `.running`, so the camera still goes up before the player
+        // can tap "start".
+        let engineRunning: Bool
+        if case .running = controller.state { engineRunning = true } else { engineRunning = false }
+        let wantsCamera = engineRunning
+            && (inputMode == .bodyPose)
+            && (controller.currentProjectDir != nil)
+            && !controller.paused
         if wantsCamera {
-            MacFaceDetector.shared.start()
+            MacFaceDetector.shared.startWatching()
         } else {
-            MacFaceDetector.shared.stop()
+            MacFaceDetector.shared.stopWatching()
         }
     }
 }

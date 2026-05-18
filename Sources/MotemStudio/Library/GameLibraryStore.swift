@@ -108,6 +108,12 @@ final class GameLibraryStore: ObservableObject {
         activeGameId = id
     }
 
+    /// Drop the active-game pointer without touching the games list.
+    /// Called when the user stops playback from the preview pane.
+    func clearActive() {
+        activeGameId = nil
+    }
+
     /// Clear local state when the user signs out so the next account
     /// starts with a clean list.
     func reset() {

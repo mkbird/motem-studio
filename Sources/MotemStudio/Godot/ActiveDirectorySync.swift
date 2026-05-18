@@ -234,7 +234,29 @@ enum ActiveDirectorySync {
         var poll_accum: float = 0.0
 
         func _ready() -> void:
+        	# Cold-start fix: SwiftGodotKit's embedded DisplayServer reports
+        	# the real pane size only after the first SwiftUI layout pass,
+        	# which happens *after* _ready runs on the very first boot.
+        	# Without a nudge, the first scene loads with the viewport still
+        	# at project.godot's declared 1194x834 — stretch=expand can't
+        	# expand because it sees the design size as the window size, so
+        	# the game renders in the upper-left and leaves grey to the
+        	# right. Subsequent reloads work because the resize event has
+        	# arrived in between. Wait one process frame for the embedded
+        	# DisplayServer to publish actual bounds, then force the root
+        	# viewport to match — this re-runs the stretch calc and the
+        	# first game fills the pane like every later one does.
+        	await get_tree().process_frame
+        	_sync_root_to_display()
         	_check_reload()
+
+        func _sync_root_to_display() -> void:
+        	var ds_size := DisplayServer.window_get_size()
+        	if ds_size.x <= 0 or ds_size.y <= 0:
+        		return
+        	var win := get_window()
+        	if win != null and win.size != ds_size:
+        		win.size = ds_size
 
         func _process(delta: float) -> void:
         	poll_accum += delta

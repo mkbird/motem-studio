@@ -73,6 +73,16 @@ final class MacFaceDetector: ObservableObject {
     private static let publishInterval: TimeInterval = 1.0 / 30.0
     nonisolated(unsafe) private var lastPublishTimeOnSampleQueue: TimeInterval = 0
 
+    // Gain applied around the 0.5 centre when mapping Vision's
+    // `boundingBox.midX/midY` to the InputBridge contract. A head that
+    // is centred in front of a FaceTime camera typically only moves
+    // through ~0.35–0.65 in normalised coordinates before falling off
+    // the frame, so without amplification players can never push
+    // `face_position` (and the derived `body_lean_*`) to the ±1 edges
+    // that v2 archetypes use. 2.8 maps ~0.32→0 and ~0.68→1, which
+    // matches the "lean your head" feel of the iPhone build.
+    private static let faceCenterGain: Double = 2.8
+
     // Frame-receiver delegate adapter. Defined inline so the detector
     // class can stay `@MainActor` without forcing the AVCapture frame
     // callback to hop actors before our Vision work runs.
@@ -296,15 +306,21 @@ final class MacFaceDetector: ObservableObject {
         // its "camera warming up" overlay and let gameplay take input.
         if !isReady { isReady = true }
         lastFacePosition = CGPoint(x: normX, y: normY)
+        // Vision's face midpoint only sweeps a narrow band around 0.5
+        // even when the player moves their head fully across the camera
+        // frame; amplify around the 0.5 centre so reasonable head
+        // motion can push `face_position` and `body_lean_*` to the
+        // edges games actually care about. Clamp to the InputBridge
+        // contract afterwards.
+        let gain = Self.faceCenterGain
+        let amplifiedX = max(0.0, min(1.0, (Double(normX) - 0.5) * gain + 0.5))
+        let amplifiedY = max(0.0, min(1.0, (Double(normY) - 0.5) * gain + 0.5))
         // body_lean_x / body_lean_y are -1..1 deltas from screen center.
-        // For face-only tracking, treat horizontal/vertical offset of
-        // the face center as the lean — coarse but matches how v2
-        // archetypes use `get_body_target(margin)` (which lerps anyway).
-        let leanX = max(-1.0, min(1.0, (normX - 0.5) * 2.0))
-        let leanY = max(-1.0, min(1.0, (normY - 0.5) * 2.0))
+        let leanX = max(-1.0, min(1.0, (amplifiedX - 0.5) * 2.0))
+        let leanY = max(-1.0, min(1.0, (amplifiedY - 0.5) * 2.0))
 
         runOnGodotThread { bridge in
-            bridge.set(property: "face_position", value: Variant(Vector2(x: Float(normX), y: Float(normY))))
+            bridge.set(property: "face_position", value: Variant(Vector2(x: Float(amplifiedX), y: Float(amplifiedY))))
             bridge.set(property: "face_detected", value: Variant(faceDetected))
             bridge.set(property: "body_lean_x", value: Variant(Float(leanX)))
             bridge.set(property: "body_lean_y", value: Variant(Float(leanY)))

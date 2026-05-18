@@ -62,8 +62,25 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_ENTITLEMENTS: Sources/MotemStudio/Resources/MotemStudio.entitlements
         GENERATE_INFOPLIST_FILE: NO
-        CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ""
+        # Sign with Developer ID Application so the app is trusted by
+        # Gatekeeper outside the user's own machine. `--timestamp` is
+        # required by `xcrun notarytool`, but Apple's TSA needs a live
+        # Apple ID auth in the keychain to issue tokens — Debug skips
+        # it so local builds aren't blocked when the TSA refuses.
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: X4BPFGFQXD
+        CODE_SIGN_IDENTITY: "Developer ID Application: DONGPENG MA (X4BPFGFQXD)"
+      configs:
+        Debug:
+          OTHER_CODE_SIGN_FLAGS: "--options runtime"
+        Release:
+          OTHER_CODE_SIGN_FLAGS: "--timestamp --options runtime"
+          # Notarisation rejects any binary carrying
+          # `com.apple.security.get-task-allow`. Xcode auto-injects
+          # that for debuggability when this flag is YES (the macOS
+          # default); we explicitly turn it off for Release so the
+          # entitlements file is the sole source of truth.
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
 
   MotemMCPBridge:
     type: tool
@@ -76,3 +93,18 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "5.9"
         SKIP_INSTALL: NO
+        # The helper binary lives inside `.app/Contents/Resources/`
+        # and must carry the same Developer ID signature for
+        # notarisation to accept the bundle as a whole.
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: X4BPFGFQXD
+        CODE_SIGN_IDENTITY: "Developer ID Application: DONGPENG MA (X4BPFGFQXD)"
+      configs:
+        Debug:
+          OTHER_CODE_SIGN_FLAGS: "--options runtime"
+        Release:
+          OTHER_CODE_SIGN_FLAGS: "--timestamp --options runtime"
+          # Same get-task-allow rejection as the main app — disable
+          # Xcode's auto-inject for Release so the helper binary
+          # carries no notarisation-blocking entitlement.
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO

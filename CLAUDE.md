@@ -18,15 +18,53 @@ xcodegen generate          # 增删源文件后必须重跑
 open MotemStudio.xcodeproj # Xcode 内 ⌘R 运行
 ```
 
-CLI build：
+CLI build（Debug，本机使用）：
 
 ```bash
 xcodebuild -project MotemStudio.xcodeproj -scheme MotemStudio \
   -configuration Debug -destination 'platform=macOS' \
-  -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+  -derivedDataPath build build
 ```
 
-产物：`build/Build/Products/Debug/MotemStudio.app`。直接 `open` 即可。
+产物：`build/Build/Products/Debug/MotemStudio.app`。直接 `open` 即可。Debug 已经用
+Developer ID Application (`X4BPFGFQXD`) 签了 + Hardened Runtime；本机
+跑没"未知开发者"警告，但**没带 `--timestamp`、没 notarize**，分发给
+别人需要走下面的 Release 路径。
+
+### 对外分发（Release + Notarize）
+
+凭据已存进 keychain，profile 名 `motem-notary`。完整流程：
+
+```bash
+# 1. 构建 Release（自动带 --timestamp）
+xcodebuild -project MotemStudio.xcodeproj -scheme MotemStudio \
+  -configuration Release -destination 'platform=macOS' \
+  -derivedDataPath build clean build
+
+# 2. 打包（保留签名）
+APP=build/Build/Products/Release/MotemStudio.app
+ditto -c -k --keepParent "$APP" /tmp/motem.zip
+
+# 3. 提交 notarize 并等结果
+xcrun notarytool submit /tmp/motem.zip \
+  --keychain-profile motem-notary --wait
+
+# 4. staple ticket（让离线 Mac 也能验证）
+xcrun stapler staple "$APP"
+
+# 5. 检验
+spctl --assess --type execute --verbose=2 "$APP"
+# 应该输出：accepted, source=Notarized Developer ID
+```
+
+**注意：**
+- `--timestamp` 需要 codesign 走 Xcode 里登录态去取 token；中国大陆
+  网络下 Apple TSA 经常 401，需要 VPN / 干净网络才能走通。
+- Release 配置在 `project.yml` 里关闭了 `CODE_SIGN_INJECT_BASE_ENTITLEMENTS`
+  —— Xcode 默认会注入 `com.apple.security.get-task-allow=true`
+  方便 debugger 附加，Apple 公证一律拒带这个 entitlement 的二进制。
+  Debug 配置保留默认注入（可以 lldb 调）。
+- 修改 entitlements 文件或 signing 配置后必须重跑 `xcodegen generate`。
 
 ## Run 前置
 

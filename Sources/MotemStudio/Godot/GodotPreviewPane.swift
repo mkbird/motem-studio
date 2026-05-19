@@ -78,7 +78,7 @@ struct GodotPreviewPane: View {
 
                 // iPhone-style rail of plain white icons on the right
                 // edge of the preview. Matches `GameRailIcon` in
-                // `deskrobot-ios/GodotGameView.swift:1641`.
+                // `motem-ios/GodotGameView.swift:1641`.
                 if case .running = controller.state {
                     rightRail
                         .padding(.trailing, 8)
@@ -418,7 +418,7 @@ struct GodotPreviewPane: View {
 
 /// iPhone-style rail icon: plain SF Symbol on the right edge of the
 /// preview, no chrome. Mirrors `GameRailIcon` from
-/// `deskrobot-ios/GodotGameView.swift:1641`: 22 pt symbol, white at
+/// `motem-ios/GodotGameView.swift:1641`: 22 pt symbol, white at
 /// 92 % opacity, 44×44 hit area, black shadow for legibility against
 /// game content, and a brief scale pulse on press.
 private struct MotemRailIcon: View {

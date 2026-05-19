@@ -175,7 +175,7 @@ PTY → /bin/zsh -ilc "cd <project> && exec <agent-bin>"
 
 详细设计：`docs/cross-platform-creation.md`。目标：用户在 Motem Studio 终端里
 让 claude 写 Godot 4 游戏，macOS 上键鼠/触控板试玩，一键 Publish 到后端，
-iPhone（deskrobot-ios）上自动可玩 —— 复用后端已有的 `_template` + `CLAUDE.md`、
+iPhone（motem-ios）上自动可玩 —— 复用后端已有的 `_template` + `CLAUDE.md`、
 `InputBridge` 跨平台契约和 `game_ready` 分发流水线。
 
 进度：

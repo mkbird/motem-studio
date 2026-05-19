@@ -1,6 +1,6 @@
 import Foundation
 
-/// Connection settings for the deskrobot-backend API the macOS app
+/// Connection settings for the motem-backend API the macOS app
 /// talks to. Mirrors `RobotConfig` on iOS so the same backend instance
 /// serves both clients without divergent URL conventions.
 ///
@@ -10,7 +10,7 @@ import Foundation
 enum BackendConfig {
 
     /// Compile-time fallback when the user hasn't set anything yet.
-    /// Keep in sync with `deskrobot-ios/RobotConfig.swift` so a fresh
+    /// Keep in sync with `motem-ios/RobotConfig.swift` so a fresh
     /// install of Motem Studio talks to the same dev backend the
     /// iPhone hits.
     static let defaultHost = "172.18.5.244"

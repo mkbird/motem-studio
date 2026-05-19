@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// Owns the macOS-side authentication state with deskrobot-backend.
+/// Owns the macOS-side authentication state with motem-backend.
 ///
 /// Persistence
 /// - `access_token` + `refresh_token` live in the macOS Keychain

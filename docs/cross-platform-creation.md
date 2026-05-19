@@ -4,7 +4,7 @@
 
 Motem Studio 是 macOS 上的 AI 游戏创作 GUI。本期目标：**用户在 Motem Studio 终端里让 claude 写出一个 Godot 4 游戏，macOS 上能用键鼠/触控板试玩；满意后一键发布，iPhone 上能用视觉+触控玩同一个游戏**。
 
-后端（deskrobot-backend）和 iOS 端（deskrobot-ios）已经有一整套 AI 生成 → zip 分发 → 设备运行的流水线，关键资源：
+后端（motem-backend）和 iOS 端（motem-ios）已经有一整套 AI 生成 → zip 分发 → 设备运行的流水线，关键资源：
 
 - 模板：`games/_template/` + `games/_template_slowpath/CLAUDE.md`，封装 `InputBridge` / `GameManager` / `I18n` / `AudioManager` autoload
 - 跨平台契约：Godot 的 `/root/InputBridge` 9 个属性（`body_lean_x/y` / `face_position` / `is_ducking` / `is_hands_up` / `hand_gesture` / `is_reaching_out` / `body_detected` / `face_detected` / `hand_position`）
@@ -21,7 +21,7 @@ Motem Studio 是 macOS 上的 AI 游戏创作 GUI。本期目标：**用户在 M
 | 是否加新 MCP 工具 | 不加 —— 现有 `godot_preview` / `godot_reload` 已足够；agent 用原生 Write/Edit 写文件 |
 | 模板复用 | macOS 启动后通过新接口 `GET /api/games/template-bundle` 拉 tarball 到 sandbox |
 | 同步触发 | macOS GUI 按钮 "Publish to iPhone"（手动），不走 agent |
-| 身份 | SwiftUI Login 面板，复用 deskrobot iOS 同一套 email/密码账号体系 |
+| 身份 | SwiftUI Login 面板，复用 motem iOS 同一套 email/密码账号体系 |
 | Library | 左侧 sidebar 拉同账号游戏列表（自有的，不含 Explore） |
 | 输入映射 | 隐式适配：`input_mode=touch|body_pose` 不变；macOS 把键鼠/触控板映射成 InputBridge 属性 |
 
@@ -51,13 +51,13 @@ Motem Studio 是 macOS 上的 AI 游戏创作 GUI。本期目标：**用户在 M
                      │  HTTPS (token-authed)
                      ▼
         ┌───────────────────────────────┐
-        │       deskrobot-backend       │
+        │       motem-backend       │
         │   GET  /api/games             │
         │   GET  /api/games/{id}/dl     │
         │   POST /api/games            (NEW)
         │   GET  /api/games/           (NEW)
         │        template-bundle        │
-        │   WS   game_ready ────────────┼──→ iPhone (deskrobot-ios)
+        │   WS   game_ready ────────────┼──→ iPhone (motem-ios)
         └───────────────────────────────┘
 ```
 
@@ -87,8 +87,8 @@ Motem Studio 是 macOS 上的 AI 游戏创作 GUI。本期目标：**用户在 M
 | GameLoader | `Sources/MotemStudio/Library/GameLoader.swift` | 下载 `/api/games/{id}/download` → 解到 sandbox → 走 godot_preview |
 | PublishController | `Sources/MotemStudio/Backend/PublishController.swift` | "Publish" 按钮 → 打 zip → POST → 进度/结果 |
 | MacOSInputAdapter | `Sources/MotemStudio/Godot/MacOSInputAdapter.swift` | NSEvent + 30Hz 泵循环；键鼠/触控板 → `/root/InputBridge` |
-| TemplateBundleEndpoint | `deskrobot-backend/robot/games/router.py` (handler) | `GET /api/games/template-bundle` → tar.gz；ETag = mtime |
-| GameUploadEndpoint | `deskrobot-backend/robot/games/router.py` (handler) | `POST /api/games` → 解压 + 落库 + 广播 `game_ready` |
+| TemplateBundleEndpoint | `motem-backend/robot/games/router.py` (handler) | `GET /api/games/template-bundle` → tar.gz；ETag = mtime |
+| GameUploadEndpoint | `motem-backend/robot/games/router.py` (handler) | `POST /api/games` → 解压 + 落库 + 广播 `game_ready` |
 
 ### 修改
 
@@ -192,8 +192,8 @@ window/stretch/aspect="keep"
 ## 模板与 CLAUDE.md 复用关系
 
 ```
-deskrobot-backend/games/_template/                   ──┐
-deskrobot-backend/games/_template_slowpath/CLAUDE.md ──┤
+motem-backend/games/_template/                   ──┐
+motem-backend/games/_template_slowpath/CLAUDE.md ──┤
                                                         ▼
                               GET /api/games/template-bundle
                                                         │

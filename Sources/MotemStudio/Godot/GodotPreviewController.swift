@@ -8,7 +8,7 @@ import SwiftGodotKit
 
 /// Single owner of the in-process Godot engine.
 ///
-/// Constraints honored from the iOS deskrobot deployment (see project
+/// Constraints honored from the iOS motem deployment (see project
 /// CLAUDE.md "AI 游戏创作系统"):
 ///
 /// - **Process-level singleton**: `GodotApp` can be created exactly once

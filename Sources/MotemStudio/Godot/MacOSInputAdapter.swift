@@ -11,7 +11,7 @@ import SwiftGodotKit
 /// `/root/InputBridge` autoload so AI-generated games written for the
 /// iOS body-pose contract can run unmodified on macOS.
 ///
-/// Contract (mirrors `deskrobot-ios/GodotGameView.swift::startInputPump`):
+/// Contract (mirrors `motem-ios/GodotGameView.swift::startInputPump`):
 ///
 /// | InputBridge property | macOS source                                      |
 /// |----------------------|---------------------------------------------------|

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Authenticated HTTP client for `deskrobot-backend`. All requests get
+/// Authenticated HTTP client for `motem-backend`. All requests get
 /// `Authorization: Bearer <token>` + `Accept-Language` automatically.
 /// `AuthManager.shared` is the source of truth for both pieces.
 @MainActor

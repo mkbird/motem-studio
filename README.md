@@ -99,7 +99,7 @@ Next (see `plan.md`):
 
 End-to-end flow: log in → write a Godot 4 game in the terminal → play
 it inside Motem Studio with keyboard / mouse / trackpad → click
-"Publish to iPhone" → the same account's iPhone (`deskrobot-ios`)
+"Publish to iPhone" → the same account's iPhone (`motem-ios`)
 receives the game through the existing `game_ready` push pipeline.
 
 Design doc: `docs/cross-platform-creation.md`. Shipped components:
@@ -111,7 +111,7 @@ Design doc: `docs/cross-platform-creation.md`. Shipped components:
       gemini through the sandbox's `.mcp.json`
 - [x] `MacOSInputAdapter` pumps keyboard / mouse / trackpad into the
       cross-platform `/root/InputBridge` autoload
-- [x] Login panel reusing the deskrobot account system; per-user
+- [x] Login panel reusing the motem account system; per-user
       `Library` sidebar pulled from `/api/games/mine`
 - [x] `TemplateBundleSync` mirrors `_template/` + slow-path CLAUDE.md
       from the backend so the terminal agents see the same scaffold

@@ -6,8 +6,8 @@ iPhone（后端 Claude Code SDK 子进程）和 macOS Motem Studio（本地终�
 
 | 来源 | 谁看得见 | 内容 |
 |---|---|---|
-| `deskrobot-backend/robot/agent/tools/game_tools.py` 内 `_GODOT_SKELETON_SYSTEM_PROMPT` | 后端 SDK 独有 | iOS runtime、screen 1194×834、UI 安全区、输入桥参考、音效 catalog、Hooks 列表、GDScript 陷阱 |
-| `deskrobot-backend/games/_template_slowpath/CLAUDE.md`（97 行）| 两端共享 | Skeleton-hook 架构、必/可选 hooks、files 修改边界、GDScript 类型推断陷阱 |
+| `motem-backend/robot/agent/tools/game_tools.py` 内 `_GODOT_SKELETON_SYSTEM_PROMPT` | 后端 SDK 独有 | iOS runtime、screen 1194×834、UI 安全区、输入桥参考、音效 catalog、Hooks 列表、GDScript 陷阱 |
+| `motem-backend/games/_template_slowpath/CLAUDE.md`（97 行）| 两端共享 | Skeleton-hook 架构、必/可选 hooks、files 修改边界、GDScript 类型推断陷阱 |
 | `motem-studio/Sources/MotemStudio/Sandbox/AgentSandbox.swift` 内 `motemPromptSection`（~110 行）| Motem 独有 | "Running inside Motem Studio" 介绍、godot_preview MCP 工具、Godot 4 cheat sheet + 从零写 main.gd 的最小示例、image 输入说明 |
 
 ### 实际产生的两个问题
@@ -33,7 +33,7 @@ iPhone（后端 Claude Code SDK 子进程）和 macOS Motem Studio（本地终�
 
 ```
 ┌────────────────────── 唯一权威：跨平台游戏规则 ────────────────────┐
-│ deskrobot-backend/games/_template_slowpath/CLAUDE.md              │
+│ motem-backend/games/_template_slowpath/CLAUDE.md              │
 │  • Operating mode: SKELETON HOOKS                                  │
 │  • Runtime environment（iOS 目标 + macOS 预览 letterbox）          │
 │  • Required hooks / Optional override hooks                        │
@@ -90,7 +90,7 @@ iPhone（后端 Claude Code SDK 子进程）和 macOS Motem Studio（本地终�
 
 ### B. 后端 `_build_skeleton_system_prompt` 改成读文件 + 注入动态变量
 
-文件：`deskrobot-backend/robot/agent/tools/game_tools.py`
+文件：`motem-backend/robot/agent/tools/game_tools.py`
 
 | 改动 | 目的 |
 |---|---|
@@ -102,11 +102,11 @@ iPhone（后端 Claude Code SDK 子进程）和 macOS Motem Studio（本地终�
 | Slowpath create 末尾 `copytree(_template_slowpath, game_dir)` 之后，**用 rendered 内容覆写 `game_dir/CLAUDE.md`** | per-game CLAUDE.md 不能留 `{audio_section}` literal |
 | 保留 `--bare`、保留 system prompt 末尾 append per-game CLAUDE.md 的现有逻辑 | 现有行为不破坏 |
 
-**约束**：用 OpenRouter 代理实测验证 token 消耗（按 `deskrobot-backend/CLAUDE.md` 的 token 调试步骤），预期 ±200 token 内。
+**约束**：用 OpenRouter 代理实测验证 token 消耗（按 `motem-backend/CLAUDE.md` 的 token 调试步骤），预期 ±200 token 内。
 
 ### C. Template-bundle 端点 serve 渲染后版本
 
-文件：`deskrobot-backend/robot/games/router.py`
+文件：`motem-backend/robot/games/router.py`
 
 | 改动 | 目的 |
 |---|---|
@@ -140,9 +140,9 @@ iPhone（后端 Claude Code SDK 子进程）和 macOS Motem Studio（本地终�
 
 | 文件 | 改动 |
 |---|---|
-| `deskrobot-backend/games/_template_slowpath/CLAUDE.md` | 97 行 → ~220 行（吸收 system prompt 的静态部分；加 `{audio_section}` 占位符） |
-| `deskrobot-backend/robot/agent/tools/game_tools.py` | 缩 `_GODOT_SKELETON_SYSTEM_PROMPT` 模板；删 `_SKELETON_*_INPUT_DOCS` 两段常量；加文件读取缓存 + `_render_slowpath_claude_md()`；slowpath create 覆写 game_dir/CLAUDE.md |
-| `deskrobot-backend/robot/games/router.py` | `_template_bundle_files()` 加 audio manifest；`_pack_template_bundle_sync()` serve 渲染后的 CLAUDE.md |
+| `motem-backend/games/_template_slowpath/CLAUDE.md` | 97 行 → ~220 行（吸收 system prompt 的静态部分；加 `{audio_section}` 占位符） |
+| `motem-backend/robot/agent/tools/game_tools.py` | 缩 `_GODOT_SKELETON_SYSTEM_PROMPT` 模板；删 `_SKELETON_*_INPUT_DOCS` 两段常量；加文件读取缓存 + `_render_slowpath_claude_md()`；slowpath create 覆写 game_dir/CLAUDE.md |
+| `motem-backend/robot/games/router.py` | `_template_bundle_files()` 加 audio manifest；`_pack_template_bundle_sync()` serve 渲染后的 CLAUDE.md |
 | `motem-studio/Sources/MotemStudio/Sandbox/AgentSandbox.swift` | `motemPromptSection` ~110 行 → ~40 行 |
 | `motem-studio/CLAUDE.md` | 注明"游戏规则唯一权威在后端" |
 | `robot/CLAUDE.md` | macOS 跨平台游戏创作段补一句"游戏规则统一在后端 CLAUDE.md，Motem 客户端不重复" |
@@ -172,7 +172,7 @@ iPhone（后端 Claude Code SDK 子进程）和 macOS Motem Studio（本地终�
 ## 验证（端到端）
 
 1. **后端单元**：`conda activate robot && pytest tests/robot/test_template_bundle.py` —— ETag 跟着文件 + audio manifest mtime 翻新；tar.gz 含新版 + 已渲染 audio section 的 CLAUDE.md
-2. **后端 token 实测**：按 `deskrobot-backend/CLAUDE.md` 的 OpenRouter 代理步骤，比对改动前后 `system[2]` token 数差异（预期 ±200 内）
+2. **后端 token 实测**：按 `motem-backend/CLAUDE.md` 的 OpenRouter 代理步骤，比对改动前后 `system[2]` token 数差异（预期 ±200 内）
 3. **后端 create 游戏**：iOS 客户端发 `[game_create]`，看 SDK 真实输出仍是 skeleton-hook 范式（read main.gd → fill 3 hooks）
 4. **Motem cold start**：删 `~/Library/Application Support/MotemStudio/sandbox/CLAUDE.md`，重启 app，登陆 → 触发 TemplateBundleSync → 检查新 sandbox CLAUDE.md：
    - Motem 段 ~40 行，无 cheat sheet

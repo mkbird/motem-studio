@@ -8,7 +8,7 @@ import Vision
 /// Front-camera face tracker for body-pose games previewed on macOS.
 ///
 /// Mirrors the iPhone `FaceDetector`'s contract on the macOS host: when
-/// the user has the toolbar control-mode picker set to `body_pose`, we
+/// the loaded game's `input_mode` (meta.json) is `body_pose`, we
 /// open the built-in front camera, run Vision face detection at 30 Hz,
 /// and write the same `/root/InputBridge` properties the iPhone writes
 /// (`face_position`, `face_detected`, `body_lean_x/y`, `body_detected`).

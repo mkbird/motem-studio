@@ -62,6 +62,26 @@ final class GodotPreviewController: ObservableObject {
         }
     }
 
+    /// `input_mode` declared in the currently-previewed game's
+    /// `meta.json` (`"touch"` / `"body_pose"`), or nil when there is no
+    /// meta file or the field is absent/empty.
+    ///
+    /// This is the PLAY-TIME source of truth for how a loaded game is
+    /// controlled — deliberately distinct from the toolbar's
+    /// `ControlModePreference`, which only expresses AUTHORING intent
+    /// (what the local agent should generate, what Publish stamps). A
+    /// body-pose game powers the front camera; a touch game never does,
+    /// regardless of the toolbar pick.
+    var currentGameInputMode: String? {
+        guard let dir = currentProjectDir else { return nil }
+        let metaURL = dir.appendingPathComponent("meta.json")
+        guard let data = try? Data(contentsOf: metaURL),
+              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let raw = dict["input_mode"] as? String,
+              !raw.isEmpty else { return nil }
+        return raw
+    }
+
     /// Mirrors `SceneTree.paused`. The preview pane uses this to flip
     /// the pause / resume icon and to overlay the PAUSED panel.
     @Published private(set) var paused: Bool = false

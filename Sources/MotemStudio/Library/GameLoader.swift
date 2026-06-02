@@ -49,6 +49,15 @@ enum GameLoader {
         do {
             let target = try await downloadAndExtract(gameId: gameId)
             NSLog("[GameLoader] extracted to %@", target.path)
+            // The downloaded zip's meta.json `input_mode` can lag behind
+            // the backend's authoritative `ai_games.input_mode` (the value
+            // the sidebar badge shows). Stamp the library value in before
+            // previewing so play-time camera logic — which reads the
+            // loaded game's meta — matches what the user sees in the list.
+            // Must run before `preview()` (whose state transition kicks
+            // off `syncCamera`) and before `markSnapshot` so the corrected
+            // meta is part of the clean baseline.
+            stampInputModeFromLibrary(into: target, gameId: gameId)
             let result = await GodotPreviewController.shared.preview(projectDir: target)
             switch result {
             case .success:
@@ -138,6 +147,30 @@ enum GameLoader {
         // (see `gameDirectory(for:)`).
         injectGameId(into: resolvedDir, gameId: gameId)
         return resolvedDir
+    }
+
+    /// Idempotent: overwrite the downloaded meta.json's `input_mode` with
+    /// the authoritative value from the library list (`GameSummary`,
+    /// sourced from `ai_games.input_mode` in the backend DB — the same
+    /// field the sidebar badge renders). The zip's on-disk `input_mode`
+    /// is frequently stale (`touch` / missing) even for body-pose games,
+    /// which would otherwise leave the front camera off during play.
+    /// No-op when the game isn't in the list or meta.json is unreadable.
+    private static func stampInputModeFromLibrary(into projectDir: URL, gameId: String) {
+        guard let summary = GameLibraryStore.shared.games.first(where: { $0.gameId == gameId }),
+              let mode = summary.inputMode, !mode.isEmpty else { return }
+        let metaURL = projectDir.appendingPathComponent("meta.json")
+        guard let data = try? Data(contentsOf: metaURL),
+              var dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return }
+        if (dict["input_mode"] as? String) == mode { return }
+        dict["input_mode"] = mode
+        if let out = try? JSONSerialization.data(
+            withJSONObject: dict,
+            options: [.prettyPrinted, .sortedKeys]
+        ) {
+            try? out.write(to: metaURL, options: .atomic)
+        }
     }
 
     /// Idempotent: read meta.json, set `game_id` if missing or stale,

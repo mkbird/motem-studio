@@ -39,25 +39,35 @@ final class ControlModePreference: ObservableObject {
         syncCamera()
     }
 
-    /// Bring `MacFaceDetector` in line with the current pick + whether
-    /// a body-pose game is currently loaded and not paused. The camera
-    /// pre-warms at game load (rather than waiting for the player to
-    /// tap "start") so the AVCaptureSession's ~200-300 ms boot overlaps
-    /// with reading the START screen — by tap time, `face_position` is
-    /// already flowing into `/root/InputBridge` and there's no
-    /// perceived input gap. Pause and game-unload still release it.
+    /// Bring `MacFaceDetector` in line with whether the *loaded game* is
+    /// a body-pose game, and whether it is currently running / not paused.
+    ///
+    /// Whether the camera powers on is a PLAY-TIME decision driven by the
+    /// loaded game's own `input_mode` (`meta.json`) — NOT this toolbar
+    /// `inputMode` pick, which only expresses AUTHORING intent (what the
+    /// local agent should generate / what Publish stamps). A body-pose
+    /// game powers the front camera; a touch game never does, whatever the
+    /// toolbar says. The one exception is a brand-new project still being
+    /// authored that has not declared `input_mode` yet: there we fall back
+    /// to the toolbar pick so the in-progress preview stays testable.
     func syncCamera() {
         let controller = GodotPreviewController.shared
         // Starting AVCaptureSession DURING Godot's `Main::setup2()` races
         // with the embedded display server / Metal init and SIGABRTs the
-        // process. Only pre-warm once the engine is fully booted; the
+        // process. Only watch once the engine is fully booted; the
         // controller calls `syncCamera()` again the moment it transitions
-        // to `.running`, so the camera still goes up before the player
-        // can tap "start".
+        // to `.running`.
         let engineRunning: Bool
         if case .running = controller.state { engineRunning = true } else { engineRunning = false }
+        // PLAY-TIME source of truth: the loaded game's declared input_mode.
+        // Fall back to the authoring toolbar pick only when the game has
+        // not declared one yet (no meta / no field).
+        let gameMode = controller.currentGameInputMode
+        let gameIsBodyPose = gameMode != nil
+            ? (gameMode == PublishController.InputMode.bodyPose.rawValue)
+            : (inputMode == .bodyPose)
         let wantsCamera = engineRunning
-            && (inputMode == .bodyPose)
+            && gameIsBodyPose
             && (controller.currentProjectDir != nil)
             && !controller.paused
         if wantsCamera {

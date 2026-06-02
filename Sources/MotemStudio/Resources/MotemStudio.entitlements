@@ -8,5 +8,14 @@
     <true/>
     <key>com.apple.security.cs.allow-jit</key>
     <true/>
+    <!-- Hardened Runtime resource access: without these the camera/mic
+         request is auto-denied (notDetermined → denied) with NO TCC
+         prompt when the app is launched normally (Finder/Dock). That
+         silently kills body-pose / face-tracking gameplay in the preview
+         pane. Required for MacFaceDetector's AVCaptureSession. -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
 </dict>
 </plist>
